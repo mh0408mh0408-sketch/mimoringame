@@ -4,25 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>ぱにっく100！DX</title>
-    
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="manifest" href="manifest.json">
-
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
     <style>
-        body { background: linear-gradient(135deg, #fff9c4 0%, #ffc1e3 50%, #b3e5fc 100%); color: #374151; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; font-family: 'Arial Black', sans-serif; touch-action: manipulation; margin: 0; transition: background 0.6s ease; padding-top: env(safe-area-inset-top); }
+        body { background: linear-gradient(135deg, #fff9c4 0%, #ffc1e3 50%, #b3e5fc 100%); color: #374151; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; font-family: 'Arial Black', sans-serif; touch-action: manipulation; margin: 0; transition: background 0.6s ease; }
         #stadium-container { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
         .player-orbit { position: absolute; min-width: 90px; height: 45px; transition: all 0.5s; z-index: 50; display: flex; align-items: center; justify-content: center; }
         .orbit-arrow { position: absolute; font-size: 34px; color: #ea580c; transition: all 0.5s; z-index: 30; pointer-events: none; text-shadow: -1px -1px 0 white, 1px -1px 0 white, -1px 1px 0 white, 1px 1px 0 white, 2px 2px 5px rgba(0,0,0,0.4); }
         
         .card-container { position: relative; flex-shrink: 0; padding: 5px; }
-        .card-base { border: 4px solid white; border-radius: 1rem; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; position: relative; transition: all 0.2s ease-out; box-shadow: 0 6px 15px rgba(0,0,0,0.2); white-space: nowrap; color: white !important; font-size: 1.8rem; text-shadow: 2px 2px 0px rgba(0,0,0,0.3); overflow: hidden; cursor: pointer; }
-        .card-active { transform: translateY(-30px) scale(1.15); border: 6px solid #fbbf24 !important; z-index: 1500; box-shadow: 0 30px 50px rgba(0,0,0,0.4); }
+        .card-base { border: 4px solid white; border-radius: 1rem; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; position: relative; transition: all 0.2s ease-out; box-shadow: 0 6px 15px rgba(0,0,0,0.2); white-space: nowrap; color: white !important; font-size: 1.8rem; text-shadow: 2px 2px 0px rgba(0,0,0,0.3); overflow: hidden; }
+        .card-active { transform: translateY(-25px) scale(1.1); border: 6px solid #fbbf24 !important; z-index: 1500; box-shadow: 0 30px 50px rgba(0,0,0,0.4); }
         
-        /* 演出用カラー */
+        .card-num-plus { background: #3b82f6 !important; }
+        .card-num-minus { background: #ef4444 !important; }
+        .card-event { background: #facc15 !important; color: #1e293b !important; text-shadow: none !important; }
+
+        .card-rare { font-size: 1.1rem; }
+        .rare-band { position: absolute; left: 0; right: 0; height: 18px; background: rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; font-size: 7px; font-weight: 900; letter-spacing: 0.1em; color: white; z-index: 5; }
+        .band-top { top: 0; border-bottom: 2px solid white; }
+        .band-bottom { bottom: 0; border-top: 2px solid white; }
+        
+        .card-brink { background: linear-gradient(135deg, #f97316, #ef4444) !important; }
+        .card-bomb { background: linear-gradient(135deg, #1e293b, #450a0a) !important; }
+        .card-tanyao { background: linear-gradient(135deg, #10b981, #064e3b) !important; }
+        .card-bag { background: linear-gradient(135deg, #f59e0b, #78350f) !important; }
+        .card-sleep { background: linear-gradient(135deg, #6366f1, #312e81) !important; }
+        .card-crazy { background: linear-gradient(135deg, #ec4899, #831843) !important; }
+
         body.vfx-active-bg { background-image: none !important; }
         .bg-vfx-brink { background-color: #ffdbbb !important; }
         .bg-vfx-bomb { background-color: #fca5a5 !important; }
@@ -32,19 +42,25 @@
         .bg-vfx-crazy { background-color: #fbcfe8 !important; }
         .bg-danger { background-color: #dc2626 !important; }
 
-        /* 新着バッジ：可愛い赤丸 */
-        .tab-red-dot { position: absolute; top: 0px; right: 0px; width: 12px; height: 12px; background-color: #ef4444; border: 2px solid white; border-radius: 50%; z-index: 10; animation: pulse 1s infinite; }
-        .new-badge { position: absolute; top: -10px; right: -10px; background: #ef4444; color: white; font-size: 9px; padding: 2px 8px; border-radius: 20px; border: 2px solid white; z-index: 1600; font-weight: 900; animation: pulse 1s infinite; }
-        
-        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
-        #vfx-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 5000; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s; }
+        .shine-effect::after {
+            content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.6), transparent);
+            transform: rotate(45deg); animation: cardShine 3s infinite; z-index: 20; pointer-events: none;
+        }
+        @keyframes cardShine { 0% { transform: translate(-100%, -100%) rotate(45deg); } 100% { transform: translate(100%, 100%) rotate(45deg); } }
+        @keyframes bombBeat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.3); } }
+        .bomb-pulsing { animation: bombBeat 0.5s infinite; filter: drop-shadow(0 0 20px red); }
+        @keyframes rotateVFX { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .vfx-rotate { animation: rotateVFX 1.2s linear infinite; }
+
+        #vfx-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 5000 !important; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s; }
         .vfx-active { opacity: 1 !important; }
         .vfx-content { font-size: 8rem; filter: drop-shadow(0 0 40px rgba(0,0,0,0.5)); transform: scale(0); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .vfx-active .vfx-content { transform: scale(1); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        
-        /* iPhone底面バー対策 */
-        #action-panel { padding-bottom: calc(2rem + env(safe-area-inset-bottom)); }
-        #hand-wrapper { padding-bottom: env(safe-area-inset-bottom); }
+        .field-card-anim { animation: cardEnter 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes cardEnter { 0% { opacity: 0; transform: scale(2.5) rotate(-15deg); } 100% { opacity: 1; transform: scale(1.1) rotate(0); } }
+        .new-badge { position: absolute; top: -10px; right: -10px; background: #ef4444; color: white; font-size: 9px; padding: 2px 8px; border-radius: 20px; border: 2px solid white; z-index: 1600; font-weight: 900; animation: pulse 1s infinite; pointer-events: none; }
     </style>
 </head>
 <body>
@@ -52,21 +68,22 @@
     <div id="vfx-overlay"><div id="vfx-item" class="vfx-content"></div></div>
     <audio id="se-play" src="https://actions.google.com/config/audio/g_regular_opening.mp3"></audio>
     <audio id="se-bomb" src="https://actions.google.com/config/audio/explosion.mp3"></audio>
+    <audio id="bgm-lobby" loop src="https://cdn.pixabay.com/audio/2022/04/27/audio_039600e628.mp3"></audio>
     <audio id="bgm-battle" loop src="https://cdn.pixabay.com/audio/2022/03/10/audio_c33ca4523a.mp3"></audio>
 
-    <div id="setup-screen" class="fixed inset-0 z-[3000] bg-gradient-to-br from-yellow-50 to-orange-100 flex items-center justify-center p-4">
-        <div id="login-box" class="bg-white p-8 rounded-[3.5rem] border-8 border-yellow-300 w-full max-w-sm shadow-[0_20px_0_#fde047] text-center">
-            <h1 class="text-4xl font-black text-yellow-500 mb-6 italic uppercase">ぱにっく100！</h1>
-            <input id="room-id" type="text" placeholder="部屋の合言葉" class="w-full bg-yellow-50 p-4 rounded-2xl mb-4 border-4 border-yellow-200 text-center font-black outline-none focus:border-orange-400">
-            <input id="user-name" type="text" placeholder="あなたの名前" class="w-full bg-yellow-50 p-4 rounded-2xl mb-8 border-4 border-yellow-200 text-center font-black outline-none focus:border-orange-400">
+    <div id="setup-screen" class="fixed inset-0 z-[3000] bg-gradient-to-br from-yellow-50 to-orange-100 flex items-center justify-center p-4 text-center overflow-y-auto">
+        <div id="login-box" class="bg-white p-8 rounded-[3.5rem] border-8 border-yellow-300 w-full max-w-sm shadow-[0_20px_0_#fde047]">
+            <h1 class="text-4xl font-black text-yellow-500 mb-6 italic uppercase drop-shadow-sm">ぱにっく100！</h1>
+            <input id="room-id" type="text" placeholder="部屋の合言葉" class="w-full bg-yellow-50 p-4 rounded-2xl mb-4 border-4 border-yellow-200 text-center font-black outline-none focus:border-orange-400 text-lg">
+            <input id="user-name" type="text" placeholder="あなたの名前" class="w-full bg-yellow-50 p-4 rounded-2xl mb-8 border-4 border-yellow-200 text-center font-black outline-none focus:border-orange-400 text-lg">
             <button onclick="joinRoom()" class="w-full bg-gradient-to-b from-orange-400 to-red-500 text-white font-black py-5 rounded-3xl shadow-xl active:translate-y-1 text-2xl uppercase italic">Entry!</button>
             <div id="conn-status" class="mt-6 text-[10px] text-orange-300 font-black uppercase">Ready</div>
         </div>
-        <div id="lobby-box" class="hidden bg-white p-8 rounded-[4rem] border-8 border-blue-300 w-full max-w-sm text-center shadow-[0_20px_0_#93c5fd]">
-            <h2 class="text-3xl font-black mb-6 text-blue-500 uppercase italic">Lobby</h2>
+        <div id="lobby-box" class="hidden bg-white p-8 rounded-[4rem] border-8 border-blue-300 w-full max-w-sm shadow-[0_20px_0_#93c5fd] text-center">
+            <h2 class="text-3xl font-black mb-6 text-blue-500 uppercase italic tracking-widest">Lobby</h2>
             <div id="member-list" class="space-y-3 max-h-64 overflow-y-auto no-scrollbar mb-8 text-left p-2"></div>
-            <div id="host-controls" class="hidden"><button id="start-btn" onclick="startGame()" class="w-full bg-gradient-to-b from-blue-400 to-indigo-600 text-white font-black py-5 rounded-3xl shadow-lg text-2xl uppercase italic">Battle Start!</button></div>
-            <div id="guest-waiting" class="text-blue-300 animate-pulse font-black uppercase text-sm">Connecting to Arena...</div>
+            <div id="host-controls" class="hidden"><button id="start-btn" onclick="startGame()" class="w-full bg-gradient-to-b from-blue-400 to-indigo-600 text-white font-black py-5 rounded-3xl shadow-lg active:translate-y-1 text-2xl uppercase italic">Battle Start!</button></div>
+            <div id="guest-waiting" class="text-blue-300 animate-pulse font-black text-sm uppercase text-center py-4">Connecting to Arena...</div>
         </div>
     </div>
 
@@ -74,8 +91,8 @@
         <div class="pt-8 p-4 shrink-0 z-[100]">
             <button onclick="toggleRules()" class="fixed top-24 right-4 z-[150] bg-white w-12 h-12 rounded-full shadow-lg font-black text-pink-500 border-4 border-pink-100 text-xl active:scale-90">？</button>
             <div class="flex items-center justify-between px-2">
-                <span id="total-display" class="text-4xl font-black text-blue-600 italic tracking-tighter">0 / 100</span>
-                <div class="flex-1 ml-4 h-6 bg-white/60 rounded-full border-2 border-white p-1 overflow-hidden">
+                <span id="total-display" class="text-4xl font-black text-blue-600 italic tracking-tighter drop-shadow-sm">0 / 100</span>
+                <div class="flex-1 ml-4 h-6 bg-white/60 rounded-full border-2 border-white p-1 shadow-inner overflow-hidden">
                     <div id="progress-bar" class="h-full bg-gradient-to-r from-cyan-400 to-blue-600 rounded-full transition-all duration-1000"></div>
                 </div>
             </div>
@@ -84,9 +101,10 @@
         <div id="battle-field" class="flex-1 relative overflow-hidden bg-white/5 min-h-0">
             <div id="stadium-container">
                 <div id="player-ring" class="absolute inset-0 pointer-events-none"></div>
+                <div id="arrow-ring" class="absolute inset-0 pointer-events-none"></div>
                 <div id="field-card-container" class="z-10 flex flex-col items-center justify-center relative">
                     <div id="last-card"></div>
-                    <div id="field-placeholder" class="text-slate-300 font-black tracking-[0.5em] opacity-30 italic text-xl">CENTER</div>
+                    <div id="field-placeholder" style="display: block;" class="text-slate-300 font-black text-center uppercase tracking-[0.5em] opacity-30 italic text-xl text-center">CENTER</div>
                 </div>
             </div>
         </div>
@@ -95,18 +113,20 @@
             <div id="turn-announcer-horiz" class="text-[10px] font-black text-pink-600 bg-white/90 px-5 py-2 rounded-full border-2 border-pink-200 shadow-sm truncate max-w-full uppercase tracking-tighter"></div>
         </div>
 
-        <div id="tab-container" class="px-4 flex mb-1 z-[110] border-2 border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
-            <button onclick="changeTab('all')" id="tab-all" class="flex-1 py-2 font-black text-[10px] border-r-2 border-slate-100 transition-all uppercase italic relative">ALL</button>
-            <button onclick="changeTab('num')" id="tab-num" class="flex-1 py-2 font-black text-[10px] border-r-2 border-slate-100 transition-all uppercase italic relative">すうじ</button>
-            <button onclick="changeTab('event')" id="tab-event" class="flex-1 py-2 font-black text-[10px] border-r-2 border-slate-100 transition-all uppercase italic relative">イベント</button>
-            <button onclick="changeTab('rare')" id="tab-rare" class="flex-1 py-2 font-black text-[10px] transition-all uppercase italic relative">レア</button>
+        <div class="px-4 flex mb-1 z-[110] border-2 border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
+            <button onclick="changeTab('all')" id="tab-all" class="flex-1 py-2 font-black text-[10px] border-r-2 border-slate-200 transition-all uppercase italic">ALL</button>
+            <button onclick="changeTab('num')" id="tab-num" class="flex-1 py-2 font-black text-[10px] border-r-2 border-slate-200 transition-all uppercase italic">すうじ</button>
+            <button onclick="changeTab('event')" id="tab-event" class="flex-1 py-2 font-black text-[10px] border-r-2 border-slate-200 transition-all uppercase italic">イベント</button>
+            <button onclick="changeTab('rare')" id="tab-rare" class="flex-1 py-2 font-black text-[10px] transition-all uppercase italic">レア</button>
         </div>
 
-        <div id="hand-wrapper" class="h-[180px] shrink-0 bg-white/40 border-t-2 border-white/60 z-[1000] flex items-center">
+        <div id="notify-area" class="h-10 flex items-center justify-center shrink-0"><div id="turn-badge" class="hidden bg-pink-500 text-white font-black px-6 py-1.5 rounded-full text-xs shadow-2xl animate-bounce uppercase border-2 border-white">YOUR TURN!</div></div>
+
+        <div id="hand-wrapper" class="h-[180px] shrink-0 bg-white/40 border-t-2 border-white/60 z-[1000] flex items-center pb-safe">
             <div id="my-hand" class="flex gap-4 px-10 overflow-x-auto no-scrollbar scroll-smooth items-center h-full w-full relative"></div>
         </div>
 
-        <div id="action-panel" style="pointer-events: none;" class="fixed bottom-0 left-0 right-0 bg-white border-t-8 border-yellow-300 p-6 z-[3000] translate-y-full transition-transform duration-500 rounded-t-[4rem]">
+        <div id="action-panel" class="fixed bottom-0 left-0 right-0 bg-white border-t-8 border-yellow-300 p-6 pb-12 shadow-[0_-15px_60px_rgba(0,0,0,0.2)] z-[3000] translate-y-full transition-transform duration-500 rounded-t-[4rem]">
             <div class="flex justify-between items-start mb-6">
                 <div><h3 id="selected-card-name" class="text-3xl font-black text-slate-800 italic uppercase">CARD</h3><p id="selected-card-desc" class="text-[11px] text-slate-500 mt-1 font-bold"></p></div>
                 <button onclick="deselectCard()" class="bg-slate-100 w-12 h-12 rounded-full flex items-center justify-center text-slate-400 font-bold text-xl">✕</button>
@@ -114,20 +134,52 @@
             <div id="target-selector" class="hidden mb-6"><div id="target-list" class="flex gap-3 overflow-x-auto no-scrollbar py-2"></div></div>
             <div id="control-area">
                 <button id="play-btn" onclick="executePlay()" class="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-black py-5 rounded-[2.5rem] text-2xl shadow-xl active:scale-95 italic uppercase tracking-widest hidden">Play Card!</button>
-                <div id="not-my-turn-msg" class="text-center text-slate-300 text-xs font-black py-6 border-4 border-dashed border-slate-100 rounded-[2.5rem] uppercase italic">Wait turn...</div>
+                <div id="not-my-turn-msg" class="text-center text-slate-300 text-xs font-black py-6 border-4 border-dashed border-slate-100 rounded-[2.5rem] uppercase italic text-center">Wait for turn</div>
             </div>
         </div>
     </div>
 
+    <div id="modal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center z-[6000] p-6 text-center text-white">
+        <div class="bg-white p-10 rounded-[4rem] border-[10px] border-pink-500 shadow-2xl max-w-sm w-full text-slate-800">
+            <h2 class="text-4xl font-black mb-2 italic uppercase text-pink-600">Finish!</h2>
+            <p id="loser-text" class="text-xl mb-10 text-slate-600 font-black"></p>
+            <button onclick="backToLobby()" class="w-full bg-blue-500 text-white font-black py-5 rounded-2xl text-lg shadow-lg uppercase italic">Lobby</button>
+        </div>
+    </div>
+
+    <div id="rules-modal" class="fixed inset-0 z-[7000] bg-black/85 hidden flex items-center justify-center p-6" onclick="toggleRules()">
+        <div class="bg-white p-8 rounded-[3.5rem] max-w-sm w-full shadow-2xl text-slate-700 max-h-[80vh] overflow-y-auto" onclick="event.stopPropagation()">
+            <h2 class="text-2xl font-black text-pink-500 mb-6 italic uppercase text-center">Rule Book</h2>
+            <div class="text-[12px] font-bold space-y-4 text-left">
+                <p>● <span class="text-red-500 font-black">100</span>以上で敗北！</p>
+                <p>● 手札が4枚以下の時、自動的に<span class="text-green-500 font-black">5枚になるまで</span>補充！</p>
+                <hr>
+                <ul class="list-disc pl-4 space-y-3">
+                    <li><span class="text-blue-600 font-black">タンヤオ</span>：全員の「数字2～8」以外廃棄！</li>
+                    <li><span class="text-red-500 font-black">BOMB</span>：相手に渡し<span class="font-black">30%</span>で爆発。数字のみ100に！</li>
+                    <li><span class="text-orange-500 font-black">フクブクロ</span>：数字カードを一気に7枚引く！</li>
+                    <li><span class="text-indigo-600 font-black">トウミン</span>：2ターン回避！</li>
+                    <li><span class="text-pink-600 font-black">ケタハズレ</span>：全員に巨大数字を3枚贈る！</li>
+                </ul>
+            </div>
+            <button onclick="toggleRules()" class="w-full mt-8 bg-pink-500 text-white font-black py-4 rounded-2xl shadow-xl uppercase">OK</button>
+        </div>
+    </div>
+
 <script>
-    // Firebase初期化（ミモリちゃんのキーを使用）
-    const firebaseConfig = { apiKey: "AIzaSyB0K9MQEuEYQghAUiLyjUWzqk32x9fznwY", authDomain: "pamimi-cbb93.firebaseapp.com", databaseURL: "https://pamimi-cbb93-default-rtdb.firebaseio.com", projectId: "pamimi-cbb93" };
+    const firebaseConfig = {
+        apiKey: "AIzaSyB0K9MQEuEYQghAUiLyjUWzqk32x9fznwY", authDomain: "pamimi-cbb93.firebaseapp.com",
+        databaseURL: "https://pamimi-cbb93-default-rtdb.firebaseio.com", projectId: "pamimi-cbb93",
+        storageBucket: "pamimi-cbb93.firebasestorage.app", messagingSenderId: "590109121218",
+        appId: "1:590109121218:web:60569644ed2b291bea395b", measurementId: "G-GHLZSQF85W"
+    };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     
-    let myName = "", roomPath = "", gameState = null, selectedIdxInFiltered = -1, lastCardID = "", targetName = "", currentTab = "all", isJoinedFlag = false, isSuspenseActive = false, lastProcessedVFX = "", lastProcessedSuspenseTurn = -1, isVFXRunning = false;
+    let myName = "", roomPath = "", gameState = null, selectedIdx = -1, lastCardID = "", lastProcessedTurn = -1, targetName = "", currentTab = "all", isJoinedFlag = false, isSuspenseActive = false, lastProcessedVFX = "", lastProcessedSuspenseTurn = -1, isVFXRunning = false;
+
     const ICONS = { 'num': '', 'skip': '⏩', 'rev': '↺', 'draw2': '🃏🃏', 'calc': '🧮', 'brink': '⚡🔥', 'bomb': '💣🧨', 'bag': '💰👜', 'sleep': '💤🛌', 'crazy': '🚀💥', 'tanyao': '🀝' };
-    const DESC = { 'num': '変化。', 'skip': '飛ばす！', 'rev': '逆転！', 'draw2': '2枚引く！', 'calc': '計算！', 'brink': '99固定！', 'bomb': '爆弾！', 'bag': '7枚引く！', 'sleep': '2回休み。', 'crazy': '3枚。', 'tanyao': '2-8以外ポイ！' };
+    const DESC = { 'num': 'カウント変化。', 'skip': '飛ばす！', 'rev': '逆転！', 'draw2': '2枚引く！', 'calc': '計算で激変！', 'brink': '99固定！', 'bomb': '相手に爆弾！', 'bag': '数字7枚！', 'sleep': '2ターン休み。', 'crazy': '3枚の死。', 'tanyao': '2-8以外廃棄！' };
 
     function toggleRules() { document.getElementById('rules-modal').classList.toggle('hidden'); }
 
@@ -135,7 +187,7 @@
         const rI = document.getElementById('room-id').value.trim();
         const nI = document.getElementById('user-name').value.trim();
         if (!rI || !nI) return alert("名前と合言葉を入れてね！");
-        myName = nI; roomPath = `panic100_final_v127/${rI}`;
+        unlockAudio(); myName = nI; roomPath = `panic100_frontier_v116/${rI}`;
         isJoinedFlag = true; render(); 
         try {
             const snap = await db.ref(roomPath).get();
@@ -146,135 +198,263 @@
                 d.players.push({ name: myName, hand: generateHand(7), hibernation: 0 });
             }
             await db.ref(roomPath).set(d);
-            db.ref(roomPath).on('value', s => { gameState = s.val(); if(gameState) render(); });
+            db.ref(roomPath).on('value', s => { 
+                gameState = s.val(); 
+                render(); 
+            });
         } catch (e) { isJoinedFlag = false; render(); }
     }
 
+    function startGame() {
+        if (!roomPath || !gameState) return;
+        const sh = shuffleArray([...gameState.players]);
+        db.ref(roomPath).update({ started: true, players: sh, currentIndex: 0, turnCount: 0, total: 0, gameOver: false, direction: 1, lastPlayed: null, suspense: null });
+    }
+
     function triggerVFX(symbol, animateClass = "", bgClass = "") {
-        if (isVFXRunning) return Promise.resolve();
+        if (isVFXRunning) return Promise.resolve(); 
         isVFXRunning = true;
         const overlay = document.getElementById('vfx-overlay'); const item = document.getElementById('vfx-item');
         item.innerHTML = symbol; item.className = "vfx-content " + (animateClass || "");
         if(bgClass) { document.body.classList.add(bgClass); document.body.classList.add('vfx-active-bg'); }
-        overlay.classList.add('vfx-active');
-        return new Promise(res => setTimeout(() => {
-            overlay.classList.remove('vfx-active');
+        overlay.classList.add('vfx-active'); 
+        return new Promise(res => setTimeout(() => { 
+            overlay.classList.remove('vfx-active'); 
             if(bgClass) { document.body.classList.remove(bgClass); document.body.classList.remove('vfx-active-bg'); }
-            isVFXRunning = false; render(); res();
-        }, 2200));
+            isVFXRunning = false; 
+            if (gameState && !gameState.gameOver) checkBombExplosion();
+            res(); 
+        }, 2200)); 
     }
 
     function makeCard(isNew = false) {
         const r = Math.random(); let card;
         if (r < 0.40) card = { name: '+' + (Math.floor(Math.random()*20)+1), type: 'num' };
         else if (r < 0.65) card = { name: '-' + (Math.floor(Math.random()*20)+1), type: 'num' };
-        else if (r < 0.85) card = { name: 'SKIP', type: 'skip', isEvent: true };
-        else card = { name: 'BOMB', type: 'bomb', isRare: true };
+        else if (r < 0.85) { 
+            const evs = [{ name: 'SKIP', type: 'skip' }, { name: 'REVERSE', type: 'rev' }, { name: 'DRAW 2', type: 'draw2' }, { name: '× 2', type: 'calc' }, { name: '÷ 2', type: 'calc' }];
+            card = { ...evs[Math.floor(Math.random()*evs.length)], isEvent: true };
+        } else { 
+            const rs = [{ name: 'セトギワ', type: 'brink' }, { name: 'BOMB', type: 'bomb' }, { name: 'タンヤオ', type: 'tanyao' }, { name: 'フクブクロ', type: 'bag' }, { name: 'トウミン', type: 'sleep' }, { name: 'ケタハズレ', type: 'crazy' }];
+            card = { ...rs[Math.floor(Math.random()*rs.length)], isRare: true };
+        }
+        card.value = (card.name.includes('×') || card.name.includes('x')) ? 'x2' : ((card.name.includes('÷') || card.name.includes('/')) ? '/2' : parseInt(card.name) || card.name);
         if (isNew) { card.isNew = true; card.age = 0; } return card;
     }
-    function generateHand(c) { return Array.from({length: c}, () => makeCard()); }
-    function shuffleArray(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-    function changeTab(tab) { currentTab = tab; selectedIdxInFiltered = -1; render(); }
-    function unlockAudio() { [document.getElementById('bgm-battle'), document.getElementById('se-play'), document.getElementById('se-bomb')].forEach(a => { if(a) { a.volume = 0.05; a.play().then(()=>a.pause()).catch(()=>{}); } }); }
 
-    function filterHand(hand) {
+    function generateHand(c) { return Array.from({length: c}, () => makeCard()); }
+    function shuffleArray(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } return array; }
+    function changeTab(tab) { currentTab = tab; render(); }
+    function unlockAudio() { [document.getElementById('bgm-lobby'), document.getElementById('bgm-battle'), document.getElementById('se-play'), document.getElementById('se-bomb')].forEach(a => { if(a) { a.volume = 0.05; a.play().then(()=>a.pause()).catch(()=>{}); } }); }
+    function setStatus(msg) { const el = document.getElementById('conn-status'); if(el) el.innerText = msg; }
+
+    function filterAndSortHand(hand) {
         if (!hand) return [];
-        return hand.map((c, i) => ({...c, originalIdx: i})).filter(c => {
+        let f = hand.filter(c => {
             if (currentTab === 'num') return c.type === 'num' && !c.isEvent && !c.isRare;
             if (currentTab === 'event') return c.isEvent;
             if (currentTab === 'rare') return c.isRare;
             return true;
-        }).sort((a, b) => (a.type === 'num' && b.type === 'num') ? parseInt(a.name) - parseInt(b.name) : a.type.localeCompare(b.type));
+        });
+        return f.sort((a, b) => (a.type === 'num' && b.type === 'num') ? parseInt(a.name) - parseInt(b.name) : (a.type || '').localeCompare(b.type || ''));
     }
 
-    function selectCard(idx) {
-        const myD = gameState.players.find(p => p.name === myName); 
-        if(!myD || isSuspenseActive || isVFXRunning) return;
-        selectedIdxInFiltered = idx; 
-        const card = filterHand(myD.hand)[idx];
+    function selectCard(i) {
+        const myD = gameState.players.find(p => p.name === myName); if(!myD || isSuspenseActive || isVFXRunning) return;
+        selectedIdx = i; const sh = filterAndSortHand(myD.hand); const card = sh[i];
         document.getElementById('selected-card-name').innerText = card.name;
         document.getElementById('selected-card-desc').innerText = DESC[card.type] || 'CARD';
-        document.getElementById('action-panel').style.pointerEvents = "auto";
+        const tSel = document.getElementById('target-selector');
+        if (card.type === 'bomb') {
+            tSel.classList.remove('hidden');
+            document.getElementById('target-list').innerHTML = gameState.players.filter(p => p.name !== myName).map(p => {
+                const isSel = (targetName === p.name);
+                return `<button onclick="targetName='${p.name}';selectCard(${i})" style="border-width: 4px; border-color: ${isSel?'#ec4899':'#e2e8f0'}; background-color: ${isSel?'#ec4899':'white'}; color: ${isSel?'white':'#64748b'};" class="px-5 py-2 rounded-xl font-black transition-all shadow-sm">${p.name}</button>`;
+            }).join('');
+        } else { tSel.classList.add('hidden'); targetName = ""; }
         document.getElementById('action-panel').classList.remove('translate-y-full'); render();
     }
-    function deselectCard() { selectedIdxInFiltered = -1; document.getElementById('action-panel').classList.add('translate-y-full'); document.getElementById('action-panel').style.pointerEvents = "none"; render(); }
-
+    function deselectCard() { selectedIdx = -1; targetName = ""; document.getElementById('action-panel').classList.add('translate-y-full'); render(); }
+    
     async function checkBombExplosion() {
         if (!gameState || isVFXRunning || isSuspenseActive) return; 
         const curP = gameState.players[gameState.currentIndex];
-        if (curP.name === myName && lastProcessedSuspenseTurn !== gameState.turnCount && curP.hand.some(c => c.name === "BOMB")) {
+        if (curP.name === myName && lastProcessedSuspenseTurn !== gameState.turnCount && curP.hand.some(c => c.name.includes("💣"))) {
             lastProcessedSuspenseTurn = gameState.turnCount;
             await db.ref(roomPath + "/suspense").set({ active: true, player: myName, turn: gameState.turnCount });
             isSuspenseActive = true; render();
             await triggerVFX('💣', 'bomb-pulsing', 'bg-vfx-bomb');
             if (Math.random() < 0.30) {
-                await triggerVFX('OUT!', '', 'bg-danger');
-                let updatedHand = curP.hand.map(c => (c.type === 'num') ? { ...c, name: "100", value: 100 } : c);
+                await db.ref(roomPath + "/suspense").set({ active: true, player: myName, result: 'OUT', turn: gameState.turnCount });
+                await triggerVFX('<div class="text-white font-black text-6xl text-center">OUT!</div>', '', 'bg-danger');
+                try { document.getElementById('se-bomb').play(); } catch(e){}
+                let updatedHand = curP.hand.filter(c => !c.name.includes("💣"));
+                updatedHand = updatedHand.map(c => (c.type === 'num') ? { ...c, name: "100", value: 100 } : c);
+                while(updatedHand.length < 5) updatedHand.push({ name: "100", type: 'num', value: 100, isNew: true, age: 0 });
                 await db.ref(roomPath + "/players/" + gameState.currentIndex + "/hand").set(updatedHand);
-            } else { await triggerVFX('SAFE!', '', 'bg-vfx-sleep'); }
+            } else {
+                await db.ref(roomPath + "/suspense").set({ active: true, player: myName, result: 'SAFE', turn: gameState.turnCount });
+                await triggerVFX('<div class="text-white font-black text-6xl text-center">SAFE!</div>', '', 'bg-vfx-sleep');
+            }
             await db.ref(roomPath + "/suspense").set(null);
             isSuspenseActive = false; render();
         }
     }
 
-    function playCard(originalIdx) {
-        const curP = gameState.players[gameState.currentIndex]; 
-        const card = curP.hand.splice(originalIdx, 1)[0];
-        let nT = gameState.total; if (card.type === 'num') nT += parseInt(card.name);
-        gameState.players.forEach(p => { while(p.hand.length < 5) p.hand.push(makeCard(true)); });
+    function playCard(idx) {
+        const curP = gameState.players[gameState.currentIndex]; const card = curP.hand.splice(idx, 1)[0];
+        let nT = gameState.total, step = 1; const vS = card.name.toString();
+        if (card.type === 'num') nT += parseInt(card.name);
+        else if (card.type === 'calc') { if(vS.includes('×') || vS.includes('x')) nT *= 2; else nT = Math.floor(nT/2); }
+        else if (card.type === 'brink') nT = 99;
+        else if (card.type === 'bag') { for(let i=0; i<7; i++) {
+            const val = Math.floor(Math.random() * 20) + 1; const sign = Math.random() < 0.5 ? '+' : '-';
+            curP.hand.push({ name: sign + val, type: 'num', value: parseInt(sign + val), isNew: true, age: 0 });
+        }}
+        else if (card.type === 'sleep') curP.hibernation = 2;
+        else if (card.type === 'tanyao') { gameState.players.forEach(p => { p.hand = p.hand.filter(c => (c.type === 'num' && !c.isEvent && !c.isRare && Math.abs(parseInt(c.name)) >= 2 && Math.abs(parseInt(c.name)) <= 8) || c.isEvent || c.isRare); }); }
+        else if (card.type === 'crazy') { gameState.players.forEach(p => { if(p.name !== myName) { for(let k=0; k<3; k++) p.hand.push({name:'2147483647',type:'num',isNew:true,age:0}); } }); }
+        else if (card.type === 'bomb') { const t = gameState.players.find(p => p.name === targetName); if(t) t.hand.push({ name: "💣🧨", type:'bomb', isNew:true, age:0 }); }
+        if (card.type === 'skip') step = 2; else if (card.type === 'rev') gameState.direction *= -1; else if (card.type === 'draw2') for(let i=0; i<2; i++) curP.hand.push(makeCard(true));
+        gameState.players.forEach(p => { if(!p.hand) p.hand = []; while(p.hand.length < 5) p.hand.push(makeCard(true)); });
+        curP.hand.forEach(c => { if(c.isNew) { if(c.age >= 1) delete c.isNew; else c.age++; } });
         nT = Math.max(0, nT); if (nT >= 100) { db.ref(roomPath).update({ total: nT, gameOver: true, loser: myName, lastPlayed: { card, player: myName, id: Date.now() } }); return; }
-        const nIdx = (gameState.currentIndex + gameState.direction + gameState.players.length) % gameState.players.length;
-        db.ref(roomPath).update({ total: nT, currentIndex: nIdx, players: gameState.players, lastPlayed: { card, player: myName, id: Date.now() }, turnCount: gameState.turnCount + 1 });
+        let nIdx = (gameState.currentIndex + gameState.direction * step + gameState.players.length) % gameState.players.length;
+        if (gameState.players[nIdx].hibernation > 0) { gameState.players[nIdx].hibernation--; nIdx = (nIdx + gameState.direction + gameState.players.length) % gameState.players.length; }
+        db.ref(roomPath).update({ total: nT, currentIndex: nIdx, direction: gameState.direction, players: gameState.players, lastPlayed: { card, player: myName, id: Date.now() }, turnCount: gameState.turnCount + 1 });
     }
 
-    function startGame() { 
-        const sh = shuffleArray([...gameState.players]);
-        db.ref(roomPath).update({ started: true, players: sh, currentIndex: 0, total: 0, gameOver: false, turnCount: 0 });
+    async function backToLobby() { const rPs = gameState.players.map(p => ({ name: p.name, hand: generateHand(7), hibernation: 0 })); await db.ref(roomPath).set({ hostName: gameState.hostName, players: rPs, started: false, gameOver: false, total: 0, currentIndex: 0, direction: 1, lastPlayed: null, turnCount: 0, suspense: null }); }
+    function handleMusic() { 
+        if (!gameState) return;
+        const l = document.getElementById('bgm-lobby'), b = document.getElementById('bgm-battle');
+        if (!gameState.started) {
+            if(l && l.paused) l.play().catch(()=>{}); b && b.pause();
+        } else {
+            l && l.pause(); if(b && b.paused) b.play().catch(()=>{});
+        }
     }
-    function executePlay() { 
-        const curP = gameState.players[gameState.currentIndex]; 
-        const card = filterHand(curP.hand)[selectedIdxInFiltered]; 
-        playCard(card.originalIdx); deselectCard(); 
-    }
+    function executePlay() { if (!gameState || isSuspenseActive || isVFXRunning) return; const curP = gameState.players[gameState.currentIndex]; if (curP.name !== myName) { alert("待ってね！"); deselectCard(); return; } const sh = filterAndSortHand(curP.hand); const card = sh[selectedIdx]; const actualIdx = curP.hand.findIndex(c => c === card); if (card.type === 'bomb' && !targetName) return alert("ターゲットを選んで！"); playCard(actualIdx); deselectCard(); }
 
     function render() {
         if (!isJoinedFlag) return;
+        handleMusic();
+        const inPlayers = gameState ? gameState.players.some(p => p.name === myName) : false;
         const isL = gameState ? (gameState.hostName === myName) : false;
+        
+        if (gameState && gameState.gameOver) { document.getElementById('loser-text').innerText = `${gameState.loser} が爆死！\nTotal: ${gameState.total}`; document.getElementById('modal').classList.remove('hidden'); } else { document.getElementById('modal').classList.add('hidden'); }
+        
         if (!gameState || !gameState.started) {
-            document.getElementById('setup-screen').classList.remove('hidden'); document.getElementById('game-screen').classList.add('hidden');
-            if (gameState) {
-                document.getElementById('login-box').classList.add('hidden'); document.getElementById('lobby-box').classList.remove('hidden');
-                document.getElementById('member-list').innerHTML = gameState.players.map(p => `<div class="p-4 bg-white rounded-2xl border-4 border-slate-100 font-black flex justify-between shadow-sm"><span>${p.name}</span>${p.name===gameState.hostName?'<span class="text-yellow-500">HOST</span>':''}</div>`).join('');
-                document.getElementById('host-controls').classList.toggle('hidden', !isL);
+            document.getElementById('setup-screen').classList.remove('hidden'); 
+            document.getElementById('game-screen').classList.add('hidden');
+            if (isJoinedFlag || inPlayers) {
+                document.getElementById('login-box').classList.add('hidden'); 
+                document.getElementById('lobby-box').classList.remove('hidden');
+                if (gameState) {
+                    document.getElementById('member-list').innerHTML = gameState.players.map(p => `<div class="p-4 bg-white rounded-2xl border-4 border-slate-100 font-black text-sm flex items-center justify-between shadow-sm"><span>${p.name}</span>${p.name===gameState.hostName?'<span class="bg-yellow-400 text-white px-2 py-0.5 rounded-full text-[8px]">HOST</span>':''}</div>`).join('');
+                    document.getElementById('host-controls').classList.toggle('hidden', !isL); 
+                    document.getElementById('guest-waiting').classList.toggle('hidden', isL);
+                } else {
+                    document.getElementById('member-list').innerHTML = "<div class='text-blue-300 animate-pulse font-black text-center py-4 uppercase'>Connecting to Arena...</div>";
+                }
             }
         } else {
-            document.getElementById('setup-screen').classList.add('hidden'); document.getElementById('game-screen').classList.remove('hidden');
+            if (!gameState) return;
             const last = gameState.lastPlayed;
-            if (last && lastProcessedVFX !== last.id && !isVFXRunning) { 
-                lastProcessedVFX = last.id;
-                if(last.card.isRare) triggerVFX('RARE!', '', 'bg-vfx-bomb');
-                try { document.getElementById('se-play').play(); } catch(e){}
+            if (last && lastProcessedVFX !== last.id) {
+                const c = last.card;
+                if (!isVFXRunning) { 
+                    lastProcessedVFX = last.id;
+                    if(c.type === 'bomb') triggerVFX('💣🧨', '', 'bg-vfx-bomb');
+                    else if(c.type === 'brink') triggerVFX('⚡🔥', '', 'bg-vfx-brink');
+                    else if(c.type === 'sleep') triggerVFX('💤🛌', '', 'bg-vfx-sleep');
+                    else if(c.type === 'bag') triggerVFX('💰👜', '', 'bg-vfx-bag');
+                    else if(c.type === 'tanyao') triggerVFX('<div class="flex text-4xl bg-white p-4 rounded-xl border-4 border-green-600 shadow-xl font-normal">🀚🀛🀜🀈🀉🀊</div>', '', 'bg-vfx-tanyao');
+                    else if(c.type === 'crazy') triggerVFX('🚀💥', '', 'bg-vfx-crazy');
+                    else if(c.type === 'skip') triggerVFX('⏩');
+                    else if(c.type === 'rev') triggerVFX('🔄', 'vfx-rotate');
+                    else if(c.type === 'draw2') triggerVFX('🃏🃏');
+                    try { const s = document.getElementById('se-play'); s.currentTime = 0; s.play().catch(()=>{}); } catch(e){}
+                }
             }
+
+            const susp = gameState.suspense;
+            if (susp && susp.active && myName !== susp.player && lastProcessedSuspenseTurn !== susp.turn) {
+                lastProcessedSuspenseTurn = susp.turn;
+                if (!susp.result) triggerVFX('💣', 'bomb-pulsing', 'bg-vfx-bomb');
+                else if (susp.result === 'OUT') triggerVFX('<div class="text-white font-black text-6xl text-center">OUT!</div>', '', 'bg-danger');
+                else if (susp.result === 'SAFE') triggerVFX('<div class="text-white font-black text-6xl text-center">SAFE!</div>', '', 'bg-vfx-sleep');
+            }
+
             if(!isVFXRunning && !isSuspenseActive) checkBombExplosion();
+            document.getElementById('setup-screen').classList.add('hidden'); document.getElementById('game-screen').classList.remove('hidden');
             document.getElementById('total-display').innerText = `${gameState.total} / 100`;
-            document.getElementById('progress-bar').style.width = `${Math.min(100, gameState.total)}%`;
+            const bar = document.getElementById('progress-bar'); bar.style.width = `${Math.min(100, gameState.total)}%`;
             
-            const myD = gameState.players.find(p => p.name === myName);
-            if (myD && myD.hand) {
-                ["all", "num", "event", "rare"].forEach(t => {
-                    const el = document.getElementById(`tab-${t}`); el.style.backgroundColor = (t === currentTab) ? "#ec4899" : "white"; el.style.color = (t === currentTab) ? "white" : "#94a3b8";
-                    const oldDot = el.querySelector('.tab-red-dot'); if(oldDot) oldDot.remove();
-                    const hasNew = (t==='all') ? myD.hand.some(c=>c.isNew) : (t==='num') ? myD.hand.some(c=>c.isNew && c.type==='num') : (t==='event') ? myD.hand.some(c=>c.isNew && c.isEvent) : myD.hand.some(c=>c.isNew && c.isRare);
-                    if (hasNew) { const dot = document.createElement('div'); dot.className = 'tab-red-dot'; el.appendChild(dot); }
-                });
-                document.getElementById('my-hand').innerHTML = filterHand(myD.hand).map((c, i) => `<div class="card-container"><button onclick="selectCard(${i})" class="card-base w-24 h-36 font-black bg-blue-500 ${selectedIdxInFiltered===i?'card-active':''}">${c.name}</button>${c.isNew ? '<span class="new-badge">New</span>' : ''}</div>`).join('');
+            const ph = document.getElementById('field-placeholder');
+            if (last || isSuspenseActive || (susp && susp.active)) ph.style.display = "none"; else ph.style.display = "block";
+
+            if (last && lastCardID !== last.id) {
+                const fs = (last.card.isRare || last.card.name.toString().length >= 6) ? '1.1rem' : '1.8rem';
+                let sc = last.card.isRare ? 'card-' + last.card.type + ' shine-effect' : (last.card.isEvent ? 'card-event' : (last.card.name.includes('+') ? 'card-num-plus' : 'card-num-minus'));
+                const bands = last.card.isRare ? '<div class="rare-band band-top">RARE</div><div class="rare-band band-bottom">RARE</div>' : '';
+                const icon = last.card.isRare ? `<div class="text-3xl mb-1 font-normal">${ICONS[last.card.type]}</div>` : '';
+                document.getElementById('last-card').innerHTML = `<div class="card-base ${sc} field-card-anim w-28 h-40 font-black shadow-xl border-b-8" style="font-size: ${fs};">${bands}${icon}${last.card.name}<div class="text-[8px] mt-4 opacity-70 font-black text-center">${last.player}</div></div>`;
+                lastCardID = last.id;
+            } else if (!last) { document.getElementById('last-card').innerHTML = ""; }
+
+            if (gameState) {
+                const ring = document.getElementById('player-ring'); const arrowContainer = document.getElementById('arrow-ring');
+                const pCount = gameState.players.length; const cX = ring.clientWidth / 2; const cY = ring.clientHeight / 2;
+                const isPC = window.innerWidth > 768; 
+                const rX = cX * (isPC ? 0.65 : 0.72); const rY = cY * (isPC ? 0.62 : 0.68);
+                const curP = gameState.players[gameState.currentIndex];
+                document.getElementById('turn-announcer-horiz').innerText = `NOW: ${curP.name}'s TURN`;
+
+                ring.innerHTML = gameState.players.map((p, i) => {
+                    const ang = (i * (360 / pCount) - 90) * (Math.PI / 180);
+                    const x = cX + rX * Math.cos(ang) - 45; const y = cY + rY * Math.sin(ang) - 22;
+                    const isC = (i === gameState.currentIndex);
+                    return `<div class="player-orbit" style="left: ${x}px; top: ${y}px; z-index: ${isC ? 200 : 50};">${isC ? '<div class="active-glow"></div>' : ''}<div class="w-full h-full rounded-2xl flex items-center justify-center font-black border-4 transition-all duration-300 ${isC ? 'border-yellow-400 bg-white scale-110 shadow-lg' : 'border-slate-300 bg-white/80 text-slate-700'}"><span class="text-[10px] truncate px-2">${p.name}</span></div><div class="absolute inset-0 pointer-events-none">
+                        ${p.hibernation > 0 ? `<div class="absolute -bottom-2 -left-4 bg-white text-blue-600 rounded-full w-9 h-9 flex flex-col items-center justify-center text-[8px] shadow-lg border-2 border-blue-400 font-black">💤<span>${p.hibernation}T</span></div>` : ''}
+                        ${p.hand && p.hand.some(c => c.name.includes("💣")) ? `<div class="absolute -bottom-2 -right-4 bg-slate-800 rounded-full w-8 h-8 flex items-center justify-center text-lg shadow-lg bomb-pulse border-2 border-white">💣</div>` : ''}
+                    </div></div>`;
+                }).join('');
+
+                arrowContainer.innerHTML = gameState.players.map((p, i) => {
+                    const startAng = (i * (360 / pCount) - 90) * (Math.PI / 180);
+                    const nextIdx = (i + gameState.direction + pCount) % pCount;
+                    const endAng = (nextIdx * (360 / pCount) - 90) * (Math.PI / 180);
+                    let midAng = (startAng + endAng) / 2; if (Math.abs(endAng - startAng) > Math.PI) midAng += Math.PI;
+                    const rot = (midAng * 180 / Math.PI) + (gameState.direction > 0 ? 90 : 270);
+                    const x = cX + rX * 0.94 * Math.cos(midAng) - 15; const y = cY + rY * 0.94 * Math.sin(midAng) - 15;
+                    return `<div class="orbit-arrow" style="left:${x}px; top:${y}px; transform: rotate(${rot}deg);">➔</div>`;
+                }).join('');
+
+                const isT = (curP.name === myName);
+                document.getElementById('play-btn').classList.toggle('hidden', !isT || isSuspenseActive || isVFXRunning); 
+                document.getElementById('not-my-turn-msg').classList.toggle('hidden', isT);
+                
+                const myD = gameState.players.find(p => p.name === myName);
+                if (myD && myD.hand) {
+                    // ソートボタンの描画
+                    ["all", "num", "event", "rare"].forEach(tab => {
+                        const el = document.getElementById(`tab-${tab}`);
+                        const isActive = (tab === currentTab);
+                        const colors = { all: "#94a3b8", num: "#3b82f6", event: "#f59e0b", rare: "#ec4899" };
+                        el.style.backgroundColor = isActive ? "#ec4899" : "#ffffff";
+                        el.style.color = isActive ? "#ffffff" : colors[tab];
+                    });
+                    const sh = filterAndSortHand(myD.hand);
+                    document.getElementById('my-hand').innerHTML = sh.map((c, i) => {
+                        const fs = (c.isRare || c.name.toString().length >= 6) ? '0.85rem' : '1.5rem';
+                        let st = c.isRare ? 'card-' + c.type + ' shine-effect' : (c.isEvent ? 'card-event' : (c.name.includes('+') ? 'card-num-plus' : 'card-num-minus'));
+                        const bands = c.isRare ? '<div class="rare-band band-top">RARE</div><div class="rare-band band-bottom">RARE</div>' : '';
+                        const icon = c.isRare ? `<div class="text-4xl mb-1 font-normal">${ICONS[c.type]}</div>` : '';
+                        return `<div class="card-container"><button onclick="selectCard(${i})" class="card-base ${st} w-24 h-36 font-black shadow-lg border-b-4 shrink-0 ${selectedIdx===i?'card-active':''}" style="font-size: ${fs};">${bands}${icon}<span>${c.name}</span></button>${c.isNew ? '<span class="new-badge">New</span>' : ''}</div>`;
+                    }).join('');
+                }
             }
-            const ring = document.getElementById('player-ring');
-            ring.innerHTML = gameState.players.map((p, i) => {
-                const ang = (i * (360 / gameState.players.length) - 90) * (Math.PI / 180);
-                const x = 150 + 100 * Math.cos(ang) - 45; const y = 150 + 100 * Math.sin(ang) - 22;
-                return `<div class="player-orbit" style="left: ${x}px; top: ${y}px;"><div class="w-full h-full rounded-2xl flex items-center justify-center font-black border-4 ${i===gameState.currentIndex ? 'border-yellow-400 bg-white shadow-lg' : 'border-slate-300 bg-white/80'}"><span>${p.name}</span></div></div>`;
-            }).join('');
         }
     }
 </script>
