@@ -23,7 +23,7 @@
         .card-base { border: 4px solid white; border-radius: 1rem; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; position: relative; transition: all 0.2s ease-out; box-shadow: 0 6px 15px rgba(0,0,0,0.2); white-space: nowrap; color: white !important; font-size: 1.8rem; text-shadow: 2px 2px 0px rgba(0,0,0,0.3); overflow: hidden; cursor: pointer; }
         .card-active { transform: translateY(-25px) scale(1.1); border: 6px solid #fbbf24 !important; z-index: 1500; box-shadow: 0 30px 50px rgba(0,0,0,0.4); }
         
-        /* 演出用背景クラス */
+        /* 演出用背景：少し濃く鮮やかに */
         body.vfx-active-bg { background-image: none !important; }
         .bg-vfx-brink { background-color: #ffccaa !important; }
         .bg-vfx-bomb { background-color: #fca5a5 !important; }
@@ -37,9 +37,10 @@
         .vfx-active { opacity: 1 !important; }
         .vfx-content { font-size: 8rem; filter: drop-shadow(0 0 40px rgba(0,0,0,0.5)); transform: scale(0); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         
-        /* 新着バッジ：赤丸 */
-        .tab-red-dot { position: absolute; top: 2px; right: 2px; width: 10px; height: 10px; background-color: #ef4444; border: 2px solid white; border-radius: 50%; animation: pulse 1s infinite; }
+        /* 新着バッジ：可愛い赤丸 */
+        .tab-red-dot { position: absolute; top: 0px; right: 0px; width: 12px; height: 12px; background-color: #ef4444; border: 2px solid white; border-radius: 50%; z-index: 10; animation: pulse 1s infinite; }
         .new-badge { position: absolute; top: -10px; right: -10px; background: #ef4444; color: white; font-size: 9px; padding: 2px 8px; border-radius: 20px; border: 2px solid white; z-index: 1600; font-weight: 900; animation: pulse 1s infinite; }
+        
         @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
         .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
@@ -52,7 +53,7 @@
     <audio id="bgm-lobby" loop src="https://cdn.pixabay.com/audio/2022/04/27/audio_039600e628.mp3"></audio>
     <audio id="bgm-battle" loop src="https://cdn.pixabay.com/audio/2022/03/10/audio_c33ca4523a.mp3"></audio>
 
-    <div id="setup-screen" class="fixed inset-0 z-[3000] bg-gradient-to-br from-yellow-50 to-orange-100 flex items-center justify-center p-4 overflow-y-auto">
+    <div id="setup-screen" class="fixed inset-0 z-[3000] bg-gradient-to-br from-yellow-50 to-orange-100 flex items-center justify-center p-4">
         <div id="login-box" class="bg-white p-8 rounded-[3.5rem] border-8 border-yellow-300 w-full max-w-sm shadow-[0_20px_0_#fde047] text-center">
             <h1 class="text-4xl font-black text-yellow-500 mb-6 italic uppercase drop-shadow-sm">ぱにっく100！</h1>
             <input id="room-id" type="text" placeholder="部屋の合言葉" class="w-full bg-yellow-50 p-4 rounded-2xl mb-4 border-4 border-yellow-200 text-center font-black outline-none focus:border-orange-400">
@@ -60,7 +61,7 @@
             <button onclick="joinRoom()" class="w-full bg-gradient-to-b from-orange-400 to-red-500 text-white font-black py-5 rounded-3xl shadow-xl active:translate-y-1 text-2xl uppercase italic">Entry!</button>
             <div id="conn-status" class="mt-6 text-[10px] text-orange-300 font-black uppercase">Ready</div>
         </div>
-        <div id="lobby-box" class="hidden bg-white p-8 rounded-[4rem] border-8 border-blue-300 w-full max-w-sm text-center">
+        <div id="lobby-box" class="hidden bg-white p-8 rounded-[4rem] border-8 border-blue-300 w-full max-w-sm text-center shadow-[0_20px_0_#93c5fd]">
             <h2 class="text-3xl font-black mb-6 text-blue-500 uppercase italic">Lobby</h2>
             <div id="member-list" class="space-y-3 max-h-64 overflow-y-auto no-scrollbar mb-8 text-left"></div>
             <div id="host-controls" class="hidden"><button id="start-btn" onclick="startGame()" class="w-full bg-gradient-to-b from-blue-400 to-indigo-600 text-white font-black py-5 rounded-3xl shadow-lg text-2xl uppercase italic active:scale-95">Battle Start!</button></div>
@@ -73,7 +74,7 @@
             <button onclick="toggleRules()" class="fixed top-24 right-4 z-[150] bg-white w-12 h-12 rounded-full shadow-lg font-black text-pink-500 border-4 border-pink-100 text-xl active:scale-90">？</button>
             <div class="flex items-center justify-between px-2">
                 <span id="total-display" class="text-4xl font-black text-blue-600 italic tracking-tighter drop-shadow-sm">0 / 100</span>
-                <div class="flex-1 ml-4 h-6 bg-white/60 rounded-full border-2 border-white p-1 overflow-hidden">
+                <div class="flex-1 ml-4 h-6 bg-white/60 rounded-full border-2 border-white p-1 overflow-hidden shadow-inner">
                     <div id="progress-bar" class="h-full bg-gradient-to-r from-cyan-400 to-blue-600 rounded-full transition-all duration-1000"></div>
                 </div>
             </div>
@@ -82,16 +83,15 @@
         <div id="battle-field" class="flex-1 relative overflow-hidden bg-white/5 min-h-0">
             <div id="stadium-container">
                 <div id="player-ring" class="absolute inset-0 pointer-events-none"></div>
-                <div id="arrow-ring" class="absolute inset-0 pointer-events-none"></div>
                 <div id="field-card-container" class="z-10 flex flex-col items-center justify-center relative">
                     <div id="last-card"></div>
-                    <div id="field-placeholder" style="display: block;" class="text-slate-300 font-black text-center uppercase tracking-[0.5em] opacity-30 italic text-xl">CENTER</div>
+                    <div id="field-placeholder" class="text-slate-300 font-black text-center uppercase tracking-[0.5em] opacity-30 italic text-xl">CENTER</div>
                 </div>
             </div>
         </div>
 
         <div class="px-6 py-1 shrink-0 flex justify-center z-[110]">
-            <div id="turn-announcer-horiz" class="text-[10px] font-black text-pink-600 bg-white/90 px-5 py-2 rounded-full border-2 border-pink-200 shadow-sm truncate max-w-full uppercase tracking-tighter"></div>
+            <div id="turn-announcer-horiz" class="text-[10px] font-black text-pink-600 bg-white/90 px-5 py-2 rounded-full border-2 border-pink-200 shadow-sm truncate max-w-full uppercase"></div>
         </div>
 
         <div id="tab-container" class="px-4 flex mb-1 z-[110] border-2 border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
@@ -110,7 +110,6 @@
                 <div><h3 id="selected-card-name" class="text-3xl font-black text-slate-800 italic uppercase">CARD</h3><p id="selected-card-desc" class="text-[11px] text-slate-500 mt-1 font-bold"></p></div>
                 <button onclick="deselectCard()" class="bg-slate-100 w-12 h-12 rounded-full flex items-center justify-center text-slate-400 font-bold text-xl">✕</button>
             </div>
-            <div id="target-selector" class="hidden mb-6"><div id="target-list" class="flex gap-3 overflow-x-auto no-scrollbar py-2"></div></div>
             <div id="control-area">
                 <button id="play-btn" onclick="executePlay()" class="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-black py-5 rounded-[2.5rem] text-2xl shadow-xl active:scale-95 italic uppercase tracking-widest hidden">Play Card!</button>
                 <div id="not-my-turn-msg" class="text-center text-slate-300 text-xs font-black py-6 border-4 border-dashed border-slate-100 rounded-[2.5rem] uppercase italic">Wait for turn</div>
@@ -118,19 +117,11 @@
         </div>
     </div>
 
-    <div id="rules-modal" class="fixed inset-0 z-[7000] bg-black/85 hidden flex items-center justify-center p-6" onclick="toggleRules()">
-        <div class="bg-white p-8 rounded-[3.5rem] max-w-sm w-full shadow-2xl text-slate-700 max-h-[80vh] overflow-y-auto" onclick="event.stopPropagation()">
-            <h2 class="text-2xl font-black text-pink-500 mb-6 italic uppercase text-center">Rule Book</h2>
-            <div class="text-[12px] font-bold space-y-4 text-left">
-                <p>● <span class="text-red-500 font-black">100</span>以上で敗北！</p>
-                <p>● 手札が4枚以下の時、自動的に<span class="text-green-500 font-black">5枚になるまで</span>補充！</p>
-                <hr>
-                <ul class="list-disc pl-4 space-y-3">
-                    <li><span class="text-blue-600 font-black">タンヤオ</span>：全員の「数字2～8」以外廃棄！</li>
-                    <li><span class="text-red-500 font-black">BOMB</span>：相手に渡し抽選で爆発。数字のみ100に！</li>
-                </ul>
-            </div>
-            <button onclick="toggleRules()" class="w-full mt-8 bg-pink-500 text-white font-black py-4 rounded-2xl shadow-xl uppercase">OK</button>
+    <div id="modal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center z-[6000] p-6 text-center text-white">
+        <div class="bg-white p-10 rounded-[4rem] border-[10px] border-pink-500 shadow-2xl max-w-sm w-full text-slate-800">
+            <h2 class="text-4xl font-black mb-2 italic uppercase text-pink-600">Finish!</h2>
+            <p id="loser-text" class="text-xl mb-10 text-slate-600 font-black"></p>
+            <button onclick="backToLobby()" class="w-full bg-blue-500 text-white font-black py-5 rounded-2xl text-lg shadow-lg uppercase italic">Lobby</button>
         </div>
     </div>
 
@@ -148,8 +139,8 @@
     async function joinRoom() {
         const rI = document.getElementById('room-id').value.trim();
         const nI = document.getElementById('user-name').value.trim();
-        if (!rI || !nI) return alert("名前と合言葉を入れてね！");
-        unlockAudio(); myName = nI; roomPath = `panic100_final_v125/${rI}`;
+        if (!rI || !nI) return alert("全部入れてね！");
+        unlockAudio(); myName = nI; roomPath = `panic100_frontier_v126/${rI}`;
         isJoinedFlag = true; render(); 
         try {
             const snap = await db.ref(roomPath).get();
@@ -174,9 +165,7 @@
         return new Promise(res => setTimeout(() => {
             overlay.classList.remove('vfx-active');
             if(bgClass) { document.body.classList.remove(bgClass); document.body.classList.remove('vfx-active-bg'); }
-            isVFXRunning = false; 
-            render(); // 演出終了後に再描画
-            res();
+            isVFXRunning = false; render(); res();
         }, 2200));
     }
 
@@ -191,7 +180,7 @@
     function generateHand(c) { return Array.from({length: c}, () => makeCard()); }
     function shuffleArray(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
     function changeTab(tab) { currentTab = tab; render(); }
-    function unlockAudio() { [document.getElementById('se-play'), document.getElementById('se-bomb')].forEach(a => { if(a) { a.volume = 0.05; a.play().then(()=>a.pause()).catch(()=>{}); } }); }
+    function unlockAudio() { [document.getElementById('bgm-lobby'), document.getElementById('bgm-battle'), document.getElementById('se-play'), document.getElementById('se-bomb')].forEach(a => { if(a) { a.volume = 0.05; a.play().then(()=>a.pause()).catch(()=>{}); } }); }
 
     function filterAndSortHand(hand) {
         if (!hand) return [];
@@ -236,10 +225,14 @@
     function playCard(idx) {
         const curP = gameState.players[gameState.currentIndex]; const card = curP.hand.splice(idx, 1)[0];
         let nT = gameState.total; if (card.type === 'num') nT += parseInt(card.name);
-        gameState.players.forEach(p => { while(p.hand.length < 5) p.hand.push(makeCard(true)); });
-        nT = Math.max(0, nT); if (nT >= 100) { db.ref(roomPath).update({ total: nT, gameOver: true, loser: myName, lastPlayed: { card, player: myName, id: Date.now() } }); return; }
+        nT = Math.max(0, nT); if (nT >= 100) { db.ref(roomPath).update({ total: nT, gameOver: true, loser: myName }); return; }
         const nIdx = (gameState.currentIndex + gameState.direction + gameState.players.length) % gameState.players.length;
         db.ref(roomPath).update({ total: nT, currentIndex: nIdx, players: gameState.players, lastPlayed: { card, player: myName, id: Date.now() }, turnCount: gameState.turnCount + 1 });
+    }
+
+    async function startGame() {
+        const sh = shuffleArray([...gameState.players]);
+        db.ref(roomPath).update({ started: true, players: sh, currentIndex: 0, turnCount: 0, total: 0, gameOver: false, direction: 1, lastPlayed: null, suspense: null });
     }
 
     function executePlay() { 
@@ -249,15 +242,16 @@
     }
 
     function handleMusic() { 
+        if (!gameState) return;
         const l = document.getElementById('bgm-lobby'), b = document.getElementById('bgm-battle');
-        if (!gameState || !gameState.started) { l && l.paused && l.play().catch(()=>{}); b && b.pause(); } 
-        else { l && l.pause(); b && b.paused && b.play().catch(()=>{}); }
+        if (!gameState.started) { if(l.paused) l.play().catch(()=>{}); b.pause(); } else { l.pause(); if(b.paused) b.play().catch(()=>{}); }
     }
 
     function render() {
         if (!isJoinedFlag) return;
         handleMusic();
         const isL = gameState ? (gameState.hostName === myName) : false;
+        if (gameState && gameState.gameOver) { document.getElementById('loser-text').innerText = `${gameState.loser} が爆死！\nTotal: ${gameState.total}`; document.getElementById('modal').classList.remove('hidden'); } else { document.getElementById('modal').classList.add('hidden'); }
         
         if (!gameState || !gameState.started) {
             document.getElementById('setup-screen').classList.remove('hidden'); document.getElementById('game-screen').classList.add('hidden');
@@ -271,51 +265,33 @@
             const last = gameState.lastPlayed;
             if (last && lastProcessedVFX !== last.id && !isVFXRunning) { 
                 lastProcessedVFX = last.id;
-                const c = last.card;
-                if(c.isRare) triggerVFX(ICONS[c.type], '', 'bg-vfx-'+c.type);
+                if(last.card.isRare) triggerVFX(ICONS[last.card.type], '', 'bg-vfx-'+last.card.type);
                 try { document.getElementById('se-play').play(); } catch(e){}
             }
             if(!isVFXRunning && !isSuspenseActive) checkBombExplosion();
             document.getElementById('total-display').innerText = `${gameState.total} / 100`;
             document.getElementById('progress-bar').style.width = `${Math.min(100, gameState.total)}%`;
             
-            // バッジ計算
             const myD = gameState.players.find(p => p.name === myName);
             if (myD && myD.hand) {
-                const hasNewNum = myD.hand.some(c => c.isNew && c.type === 'num');
-                const hasNewEvent = myD.hand.some(c => c.isNew && c.isEvent);
-                const hasNewRare = myD.hand.some(c => c.isNew && c.isRare);
-                
                 ["all", "num", "event", "rare"].forEach(t => {
-                    const el = document.getElementById(`tab-${t}`);
-                    const isActive = (t === currentTab);
-                    el.style.backgroundColor = isActive ? "#ec4899" : "white";
-                    el.style.color = isActive ? "white" : "#94a3b8";
-                    
-                    // 赤丸バッジを全削除してから条件で追加
+                    const el = document.getElementById(`tab-${t}`); el.style.backgroundColor = (t === currentTab) ? "#ec4899" : "white"; el.style.color = (t === currentTab) ? "white" : "#94a3b8";
                     const oldDot = el.querySelector('.tab-red-dot'); if(oldDot) oldDot.remove();
-                    if ((t==='all' && (hasNewNum||hasNewEvent||hasNewRare)) || (t==='num' && hasNewNum) || (t==='event' && hasNewEvent) || (t==='rare' && hasNewRare)) {
-                        const dot = document.createElement('div'); dot.className = 'tab-red-dot'; el.appendChild(dot);
-                    }
+                    const hasNew = (t==='all') ? myD.hand.some(c=>c.isNew) : (t==='num') ? myD.hand.some(c=>c.isNew && c.type==='num' && !c.isEvent && !c.isRare) : (t==='event') ? myD.hand.some(c=>c.isNew && c.isEvent) : myD.hand.some(c=>c.isNew && c.isRare);
+                    if (hasNew) { const dot = document.createElement('div'); dot.className = 'tab-red-dot'; el.appendChild(dot); }
                 });
-
-                const sh = filterAndSortHand(myD.hand);
-                document.getElementById('my-hand').innerHTML = sh.map((c, i) => `
-                    <div class="card-container"><button onclick="selectCard(${i})" class="card-base w-24 h-36 font-black bg-blue-500 ${selectedIdx===i?'card-active':''}">${c.name}</button>${c.isNew ? '<span class="new-badge">New</span>' : ''}</div>
-                `).join('');
+                const fHand = filterAndSortHand(myD.hand);
+                document.getElementById('my-hand').innerHTML = fHand.map((c, i) => `<div class="card-container"><button onclick="selectCard(${i})" class="card-base w-24 h-36 font-black bg-blue-500 ${selectedIdx===i?'card-active':''}">${c.name}</button>${c.isNew ? '<span class="new-badge">New</span>' : ''}</div>`).join('');
             }
-
             const ring = document.getElementById('player-ring'); const pCount = gameState.players.length;
+            const isPC = window.innerWidth > 768; const rX = (isPC ? 0.65 : 0.7) * (ring.clientWidth/2); const rY = (isPC ? 0.62 : 0.65) * (ring.clientHeight/2);
             ring.innerHTML = gameState.players.map((p, i) => {
                 const ang = (i * (360 / pCount) - 90) * (Math.PI / 180);
-                const x = 150 + 100 * Math.cos(ang) - 45; const y = 150 + 100 * Math.sin(ang) - 22;
-                return `<div class="player-orbit" style="left: ${x}px; top: ${y}px;"><div class="w-full h-full rounded-2xl flex items-center justify-center font-black border-4 ${i===gameState.currentIndex ? 'border-yellow-400 bg-white' : 'border-slate-300 bg-white/80'}"><span>${p.name}</span></div></div>`;
+                const x = (ring.clientWidth/2) + rX * Math.cos(ang) - 45; const y = (ring.clientHeight/2) + rY * Math.sin(ang) - 22;
+                return `<div class="player-orbit" style="left: ${x}px; top: ${y}px;"><div class="w-full h-full rounded-2xl flex items-center justify-center font-black border-4 ${i===gameState.currentIndex ? 'border-yellow-400 bg-white shadow-lg' : 'border-slate-300 bg-white/80'}"><span>${p.name}</span></div></div>`;
             }).join('');
         }
     }
 </script>
 </body>
 </html>
-</body>
-</html>
-
