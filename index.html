@@ -192,7 +192,7 @@
         try {
             const snap = await db.ref(roomPath).get();
             let d = snap.val();
-            if (!d) d = { hostName: myName, players: [{ name: myName, hand: generateHand(7), hibernation: 0 }], started: false, total: 0, currentIndex: 0, direction: 1, lastPlayed: null, turnCount: 0, suspense: null, gameOver: false, numberOnlyTurns: 0 };
+            if (!d) d = { hostName: myName, players: [{ name: myName, hand: generateHand(7), hibernation: 0 }], started: false, total: 0, currentIndex: 0, direction: 1, lastPlayed: null, turnCount: 0, suspense: null, gameOver: false, numberOnlyTurns: 0, nextNumMultiplier: 1 };
             else if (!d.players.find(p => p.name === myName)) {
                 if (d.started) return alert("進行中！"); d.players.push({ name: myName, hand: generateHand(7), hibernation: 0 });
             }
@@ -306,7 +306,8 @@
 
         const ring = document.getElementById('player-ring'); const arrows = document.getElementById('arrow-ring'); const cX = ring.clientWidth / 2; const cY = ring.clientHeight / 2; const rX = cX * 0.75; const rY = cY * 0.78; const curP = gameState.players[gameState.currentIndex]; const isT = (curP && curP.name.trim() === myName.trim());
         const aEl = document.getElementById('turn-announcer-horiz');
-        aEl.innerText = `NOW: ${curP ? curP.name : ''}'s TURN${gameState.numberOnlyTurns > 0 ? ' ⚠️数字カードのみ！' : ''}`;
+        let multText = (gameState.nextNumMultiplier > 1) ? ` ⚠️次の数字は${gameState.nextNumMultiplier}倍！` : '';
+        aEl.innerText = `NOW: ${curP ? curP.name : ''}'s TURN${gameState.numberOnlyTurns > 0 ? ' ⚠️数字カードのみ！' : ''}${multText}`;
         if (gameState.numberOnlyTurns > 0) aEl.classList.add('bg-red-500', 'text-white'); else aEl.classList.remove('bg-red-500', 'text-white');
         document.getElementById('play-btn').classList.toggle('hidden', !isT || isSuspenseActive || isVFXRunning); document.getElementById('not-my-turn-msg').classList.toggle('hidden', isT);
         arrows.innerHTML = gameState.players.map((p, i) => { const ang = (i * (360 / gameState.players.length) - 90) * (Math.PI / 180); const nAng = ((i + gameState.direction + gameState.players.length) % gameState.players.length * (360 / gameState.players.length) - 90) * (Math.PI / 180); let midAng = (ang + nAng) / 2; if (Math.abs(nAng - ang) > Math.PI) midAng += Math.PI; const rot = (midAng * 180 / Math.PI) + (gameState.direction > 0 ? 90 : 270); return `<div class="orbit-arrow" style="left:${cX + rX * 0.94 * Math.cos(midAng) - 15}px; top:${cY + rY * 0.94 * Math.sin(midAng) - 15}px; transform: rotate(${rot}deg);">➔</div>`; }).join('');
@@ -332,12 +333,13 @@
         amodal.classList.add('hidden'); amodal.classList.remove('flex');
         render(); 
     }
-    function startGame() { db.ref(roomPath).update({ started: true, players: shuffleArray([...gameState.players]), total: 0, currentIndex: 0, direction: 1, turnCount: 0, suspense: null, gameOver: false, lastPlayed: null, numberOnlyTurns: 0 }); }
-    async function backToLobby() { const rPs = gameState.players.map(p => ({ name: p.name, hand: generateHand(7), hibernation: 0 })); await db.ref(roomPath).update({ started: false, gameOver: false, players: rPs, total: 0, currentIndex: 0, lastPlayed: null, turnCount: 0, suspense: null, numberOnlyTurns: 0 }); }
+    function startGame() { db.ref(roomPath).update({ started: true, players: shuffleArray([...gameState.players]), total: 0, currentIndex: 0, direction: 1, turnCount: 0, suspense: null, gameOver: false, lastPlayed: null, numberOnlyTurns: 0, nextNumMultiplier: 1 }); }
+    async function backToLobby() { const rPs = gameState.players.map(p => ({ name: p.name, hand: generateHand(7), hibernation: 0 })); await db.ref(roomPath).update({ started: false, gameOver: false, players: rPs, total: 0, currentIndex: 0, lastPlayed: null, turnCount: 0, suspense: null, numberOnlyTurns: 0, nextNumMultiplier: 1 }); }
     function executePlay() { const curP = gameState.players[gameState.currentIndex]; if (curP.name !== myName) return; const sh = filterAndSortHand(curP.hand); const card = sh[selectedIdx]; if (card.type === 'bomb' && !targetName) return alert("ターゲットを選んで！"); playCard(curP.hand.findIndex(c => c === card)); deselectCard(); }
     function playCard(idx) { const curP = gameState.players[gameState.currentIndex]; const card = curP.hand.splice(idx, 1)[0]; let nT = gameState.total;
         let nextNumOnlyTurns = (gameState.numberOnlyTurns || 0); if (nextNumOnlyTurns > 0) nextNumOnlyTurns--;
-        if (card.type === 'num') nT += parseInt(card.name); else if (card.type === 'calc') nT = card.name.includes('×') ? nT * 2 : Math.floor(nT / 2); else if (card.type === 'brink') { nT = 99; nextNumOnlyTurns = gameState.players.length - 1; }
+        let multiplier = (gameState.nextNumMultiplier || 1);
+        if (card.type === 'num') { nT += parseInt(card.name) * multiplier; } else if (card.type === 'calc' && !card.name.includes('×')) { nT = Math.floor(nT / 2); } else if (card.type === 'brink') { nT = 99; nextNumOnlyTurns = gameState.players.length - 1; }
         else if (card.type === 'bag') { for(let i=0; i<7; i++) { const v = Math.floor(Math.random()*20)+1; const s = Math.random()<0.5?'+':'-'; curP.hand.push({name:s+v,type:'num',isNew:true}); }} else if (card.type === 'sleep') curP.hibernation = 2; 
         else if (card.type === 'tanyao') {
             gameState.players.forEach(p => {
@@ -348,7 +350,8 @@
         else if (card.type === 'bomb') { const t = gameState.players.find(p => p.name === targetName); if(t) t.hand.push({ name: "💣🧨", type:'bomb', isNew:true, isEvent: true }); }
         let step = card.type === 'skip' ? 2 : 1;
         if (card.type === 'rev') gameState.direction *= -1; else if (card.type === 'draw2') for(let i=0; i<2; i++) curP.hand.push(makeCard(true));
-        gameState.players.forEach(p => { p.hand.forEach(c => { if(c.isNew) { c.age = (c.age || 0) + 1; if(c.age > 1) delete c.isNew; } }); while(p.hand.length < 5) p.hand.push(makeCard(true)); }); nT = Math.max(0, nT); let nIdx = (gameState.currentIndex + gameState.direction * step + gameState.players.length) % gameState.players.length; while(true) { let skipThis = false; let cp = gameState.players[nIdx]; if (cp.hibernation > 0) { cp.hibernation--; if (nextNumOnlyTurns > 0) nextNumOnlyTurns--; skipThis = true; } else if (nextNumOnlyTurns > 0 && cp.hand && !cp.hand.some(c => c.type === 'num')) { nextNumOnlyTurns--; skipThis = true; } if (!skipThis) break; nIdx = (nIdx + gameState.direction + gameState.players.length) % gameState.players.length; } db.ref(roomPath).update({ total: nT, currentIndex: nIdx, direction: gameState.direction, players: gameState.players, lastPlayed: { card, player: myName, id: Date.now() }, turnCount: gameState.turnCount + 1, gameOver: nT >= 100, loser: nT >= 100 ? myName : null, numberOnlyTurns: nextNumOnlyTurns });
+        if (card.type === 'calc' && card.name.includes('×')) multiplier = 2; else multiplier = 1;
+        gameState.players.forEach(p => { p.hand.forEach(c => { if(c.isNew) { c.age = (c.age || 0) + 1; if(c.age > 1) delete c.isNew; } }); while(p.hand.length < 5) p.hand.push(makeCard(true)); }); nT = Math.max(0, nT); let nIdx = (gameState.currentIndex + gameState.direction * step + gameState.players.length) % gameState.players.length; while(true) { let skipThis = false; let cp = gameState.players[nIdx]; if (cp.hibernation > 0) { cp.hibernation--; if (nextNumOnlyTurns > 0) nextNumOnlyTurns--; skipThis = true; } else if (nextNumOnlyTurns > 0 && cp.hand && !cp.hand.some(c => c.type === 'num')) { nextNumOnlyTurns--; skipThis = true; } if (!skipThis) break; nIdx = (nIdx + gameState.direction + gameState.players.length) % gameState.players.length; } db.ref(roomPath).update({ total: nT, currentIndex: nIdx, direction: gameState.direction, players: gameState.players, lastPlayed: { card, player: myName, id: Date.now() }, turnCount: gameState.turnCount + 1, gameOver: nT >= 100, loser: nT >= 100 ? myName : null, numberOnlyTurns: nextNumOnlyTurns, nextNumMultiplier: multiplier });
     }
 </script>
 </body>
