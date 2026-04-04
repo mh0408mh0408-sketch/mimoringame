@@ -306,7 +306,7 @@
 
         const ring = document.getElementById('player-ring'); const arrows = document.getElementById('arrow-ring'); const cX = ring.clientWidth / 2; const cY = ring.clientHeight / 2; const rX = cX * 0.75; const rY = cY * 0.78; const curP = gameState.players[gameState.currentIndex]; const isT = (curP && curP.name.trim() === myName.trim());
         const aEl = document.getElementById('turn-announcer-horiz');
-        let multText = (gameState.nextNumMultiplier > 1) ? ` ⚠️次の数字は${gameState.nextNumMultiplier}倍！` : '';
+        let multText = (gameState.nextNumMultiplier > 1) ? ` ⚠️次の人のみ数字${gameState.nextNumMultiplier}倍！` : '';
         aEl.innerText = `NOW: ${curP ? curP.name : ''}'s TURN${gameState.numberOnlyTurns > 0 ? ' ⚠️数字カードのみ！' : ''}${multText}`;
         if (gameState.numberOnlyTurns > 0) aEl.classList.add('bg-red-500', 'text-white'); else aEl.classList.remove('bg-red-500', 'text-white');
         document.getElementById('play-btn').classList.toggle('hidden', !isT || isSuspenseActive || isVFXRunning); document.getElementById('not-my-turn-msg').classList.toggle('hidden', isT);
@@ -320,7 +320,7 @@
         const myD = gameState.players.find(p => p.name.trim() === myName.trim()); const card = filterAndSortHand(myD.hand)[i];
         if (gameState.numberOnlyTurns > 0 && card.type !== 'num') return;
         selectedIdx = i;
-        document.getElementById('selected-card-name').innerText = card.name; document.getElementById('selected-card-desc').innerText = DESC[card.type] || 'CARD'; const tSel = document.getElementById('target-selector');
+        document.getElementById('selected-card-name').innerText = card.name; document.getElementById('selected-card-desc').innerText = (card.type === 'calc') ? (card.name.includes('×') ? '次の人の出す数字を2倍にする！(1人のみ)' : '合計値を半分にする！') : (DESC[card.type] || 'CARD'); const tSel = document.getElementById('target-selector');
         if (card.type === 'bomb') { tSel.classList.remove('hidden'); document.getElementById('target-list').innerHTML = gameState.players.filter(p => p.name !== myName).map(p => `<button onclick="targetName='${p.name}';selectCard(${i})" class="px-3 py-1.5 rounded-lg text-sm font-black ${targetName===p.name?'bg-pink-500 text-white border-2 border-pink-500':'bg-white text-slate-500 border-2 border-slate-200'}">${p.name}</button>`).join(''); }
         else { tSel.classList.add('hidden'); targetName = ""; }
         const amodal = document.getElementById('action-modal'); 
