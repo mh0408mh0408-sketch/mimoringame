@@ -376,9 +376,9 @@
                 <div id="selected-card-gold-gain" class="hidden mt-2 inline-block bg-amber-100 text-amber-800 border border-amber-300 text-[11px] font-black px-3 py-0.5 rounded-full"></div>
             </div>
 
-            <!-- マネッコ用：過去1巡の履歴選択エリア -->
+            <!-- マネッコ用：直近（人数-1枚分）の履歴選択エリア -->
             <div id="mimic-selector" class="hidden mb-5 bg-cyan-50 p-3 rounded-2xl border-2 border-cyan-200">
-                <p class="text-xs text-cyan-700 font-black mb-2 uppercase text-center">🪞 コピーするカードを選んで！（過去1巡）</p>
+                <p id="mimic-selector-label" class="text-xs text-cyan-700 font-black mb-2 uppercase text-center">🪞 コピーするカードを選んで！（直近・人数-1枚分）</p>
                 <div id="mimic-list" class="flex gap-2 overflow-x-auto py-2 px-1 no-scrollbar items-center justify-start"></div>
                 <div id="mimic-selected-info" class="mt-2 bg-white rounded-xl p-2 border border-cyan-200 text-center text-[11px] font-bold text-slate-600 hidden"></div>
             </div>
@@ -432,10 +432,10 @@
                 <p class="text-[11px] font-bold text-slate-500 mt-0.5">「マネッコ」でコピーできる過去1巡のカードと全体履歴</p>
             </div>
 
-            <!-- 🪞 現在マネッコでコピー可能な「過去1巡」カード一覧 -->
+            <!-- 🪞 現在マネッコでコピー可能な「直近（人数-1枚）」カード一覧 -->
             <div class="bg-cyan-100/70 border-2 border-cyan-300 rounded-2xl p-3 mb-3 shrink-0">
                 <div class="flex items-center justify-between mb-1.5">
-                    <span class="text-xs font-black text-cyan-800">🪞 いま「マネッコ」で選べるカード（過去1巡）</span>
+                    <span id="history-mimic-title" class="text-xs font-black text-cyan-800">🪞 いま「マネッコ」で選べるカード（直近・人数-1枚）</span>
                     <span id="history-mimic-badge" class="text-[10px] font-black bg-cyan-600 text-white px-2 py-0.5 rounded-full">0枚</span>
                 </div>
                 <div id="history-mimic-cards" class="flex gap-2 overflow-x-auto py-1.5 px-1 no-scrollbar items-center"></div>
@@ -480,7 +480,7 @@
                         <li>👜 <span class="text-amber-600 font-black">フクブクロ</span>：自分が数字カードを一気に7枚ドロー！</li>
                         <li>💤 <span class="text-indigo-600 font-black">トウミン</span>：自分は2ターンの間、手番をスキップして安全に回避！</li>
                         <li>🚀 <span class="text-pink-600 font-black">ケタハズレ</span>：自分以外の全員に巨大数字「2147483647」を3枚ずつ贈呈！</li>
-                        <li>🪞 <span class="text-cyan-600 font-black">マネッコ</span>：過去1巡に出されたカード履歴から1枚を選び、全く同じ効果として発動！</li>
+                        <li>🪞 <span class="text-cyan-600 font-black">マネッコ</span>：直近「プレイヤー人数 − 1」枚分のカード履歴から1枚を選び、全く同じ効果として発動！</li>
                         <li>🕶️ <span class="text-purple-700 font-black">メカクシ</span>：2巡の間「暗闇状態」に！①現在のTotal不明 ②場に出る数字・計算カードが黒塗り ③他プレイヤーの所持Gが非公開に！</li>
                         <li>🎁 <span class="text-yellow-600 font-black">オタカラ</span>：G獲得ギャンブル！（15%:0G / 25%:10G / 25%:20G / 25%:30G / 10%:50G ※ショップ価格25G）</li>
                         <li>💸 <span class="text-fuchsia-600 font-black">カツアゲ</span>：他プレイヤー全員の所持Gから2割（切り捨て）を強制徴収して総取り！</li>
@@ -546,7 +546,7 @@
         'sleep': '2ターンの間、自分の番をスキップして冬眠！',
         'crazy': '自分以外の全員に「2147483647」を3枚ずつ贈呈！',
         'tanyao': '選んだ1人（自分含む）の手札から絶対値2〜9の数字（±2〜±9）以外をすべて破棄！',
-        'mimic': '過去1巡に出されたカード履歴から1枚を選び、全く同じ効果で発動！',
+        'mimic': '直近「プレイヤー人数 − 1」枚分のカード履歴から1枚を選び、全く同じ効果で発動！',
         'blind': '2巡の間「暗闇状態」に！合計値・数字系カード・他プレイヤーの所持Gを隠蔽！',
         'treasure': 'ランダムでG獲得！（15%:0G / 25%:10G / 25%:20G / 25%:30G / 10%:50G）',
         'extort': '自分以外の全員から所持Gの2割（切り捨て）を強制徴収して総取り！'
@@ -682,14 +682,17 @@
         const allHist = gameState.cardHistory || [];
         const myD = gameState.players.find(p => p.name.trim() === myName.trim());
         const hasMimicInHand = !!(myD && myD.hand && myD.hand.some(c => c.type === 'mimic'));
+        const lookbackMax = Math.max(1, (gameState.players ? gameState.players.length : 2) - 1);
 
-        document.getElementById('history-mimic-badge').innerText = `${pastHist.length}枚`;
+        const titleEl = document.getElementById('history-mimic-title');
+        if (titleEl) titleEl.innerText = `🪞 いま「マネッコ」で選べるカード（直近${lookbackMax}枚）`;
+        document.getElementById('history-mimic-badge').innerText = `${pastHist.length}/${lookbackMax}枚`;
         const hintEl = document.getElementById('history-mimic-shortcut-hint');
         hintEl.classList.toggle('hidden', !(hasMimicInHand && pastHist.length > 0));
 
         const mimicCardsEl = document.getElementById('history-mimic-cards');
         if (pastHist.length === 0) {
-            mimicCardsEl.innerHTML = `<div class="text-xs font-bold text-slate-400 py-3 w-full text-center">まだ過去1巡に出されたカードがありません</div>`;
+            mimicCardsEl.innerHTML = `<div class="text-xs font-bold text-slate-400 py-3 w-full text-center">まだ場に出されたカードがありません</div>`;
         } else {
             mimicCardsEl.innerHTML = pastHist.map((h, idx) => {
                 const eff = h.effectiveCard || h.card;
@@ -973,25 +976,13 @@
         )).sort((a, b) => (a.type === 'num' && b.type === 'num') ? parseInt(a.name) - parseInt(b.name) : (a.type || '').localeCompare(b.type || ''));
     }
 
-    // マネッコ用：過去1巡に出されたカード履歴を取得
+    // マネッコ用：リバースやスキップがあっても常に直近「プレイヤー人数 - 1」枚分のカード履歴を取得
     function getPastRoundHistory() {
         if (!gameState || !gameState.cardHistory || gameState.cardHistory.length === 0) return [];
         const hist = gameState.cardHistory;
-        // 末尾から遡って「自分が前回出したカード」を探す
-        let lastMyIdx = -1;
-        for (let i = hist.length - 1; i >= 0; i--) {
-            if (hist[i].player === myName) {
-                lastMyIdx = i;
-                break;
-            }
-        }
-        let sliceStart = (lastMyIdx !== -1) ? lastMyIdx + 1 : 0;
-        // 過去1巡分（最大でもプレイヤー人数分）に絞る
-        const maxCount = Math.max(1, gameState.players.length);
-        if (hist.length - sliceStart > maxCount) {
-            sliceStart = hist.length - maxCount;
-        }
-        return hist.slice(sliceStart);
+        const playerCount = (gameState.players && gameState.players.length) ? gameState.players.length : 2;
+        const lookbackCount = Math.max(1, playerCount - 1);
+        return hist.slice(-lookbackCount);
     }
 
     // カードHTMLの共通レンダラー
@@ -1443,6 +1434,9 @@
 
         if (card.type === 'mimic') {
             mimicSel.classList.remove('hidden');
+            const lookbackMax = Math.max(1, (gameState.players ? gameState.players.length : 2) - 1);
+            const mimicLbl = document.getElementById('mimic-selector-label');
+            if (mimicLbl) mimicLbl.innerText = `🪞 コピーするカードを選んで！（直近${lookbackMax}枚）`;
             const infoBox = document.getElementById('mimic-selected-info');
             if (pastHist.length === 0) {
                 document.getElementById('mimic-list').innerHTML = `<div class="text-xs font-bold text-slate-400 py-4 w-full text-center">まだコピーできるカード履歴がありません</div>`;
