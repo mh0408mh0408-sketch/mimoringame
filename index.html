@@ -422,15 +422,16 @@
                     <h3 class="text-center text-amber-600 font-black uppercase text-sm">🛒 ショップ＆ゴールド(G)</h3>
                     <p>● <b>初期資金:</b> 全員 <b>20G</b> スタート（所持Gは全員に公開）。</p>
                     <p>● <b>Gの稼ぎ方:</b> 数字カードを場に出すと、<b>その数字の絶対値分G</b>を獲得！（例：+20なら20G、-5なら5G）</p>
-                    <p>● <b>ショップ購入:</b> いつでも閲覧OK！自分のターン中、カードを出す前に購入でき、すぐ手札に入って即使用可能！自分のターン終了時に4枠が更新されます。</p>
-                    <div class="text-[11px] bg-white p-2 rounded-xl border border-amber-200 mt-1">
-                        <div>・数字カード：<b>|数字| + 5G</b>　・計算/SKIP/REV：<b>10G</b></div>
-                        <div>・DRAW 2：<b>15G</b>　・レアカード全種：<b>25G</b></div>
+                    <p>● <b>ショップ購入:</b> いつでも閲覧OK！<b>必ずレアカードが1枠以上出現</b>します。自分のターン中（カードを出す前）に購入でき、すぐ手札に入って即使用可能！自分のターン終了時に4枠が更新されます。</p>
+                    <div class="text-[11px] bg-white p-2 rounded-xl border border-amber-200 mt-1 space-y-0.5">
+                        <div>・プラス数字：<b>|数字| + 10G</b>（実質負担10G）</div>
+                        <div>・マイナス数字：<b>|数字| + 15G</b>（実質負担15G）</div>
+                        <div>・計算/SKIP/REV：<b>20G</b>　・DRAW 2：<b>30G</b>　・レア全種：<b>50G</b></div>
                     </div>
                 </div>
 
                 <div class="bg-slate-50 p-3 rounded-2xl border-2 border-slate-200">
-                    <h3 class="text-center text-orange-500 font-black uppercase text-sm mb-2">✨ RARE CARDS（全10種・各25G）</h3>
+                    <h3 class="text-center text-orange-500 font-black uppercase text-sm mb-2">✨ RARE CARDS（全10種・各50G）</h3>
                     <ul class="space-y-2 text-[11px]">
                         <li>⚡ <span class="text-orange-600 font-black">セトギワ</span>：カウントを99にする＆次の一巡は全員数字カードのみ！（数字がない人はスキップ）</li>
                         <li>💣 <span class="text-red-600 font-black">BOMB</span>：指名した相手に爆弾を押し付ける！手番開始時30%で爆死（数字が全て100に変化）。</li>
@@ -440,7 +441,7 @@
                         <li>🚀 <span class="text-pink-600 font-black">ケタハズレ</span>：自分以外の全員に巨大数字「2147483647」を3枚ずつ贈呈！</li>
                         <li>🪞 <span class="text-cyan-600 font-black">マネッコ</span>：過去1巡に出されたカード履歴から1枚を選び、全く同じ効果として発動！</li>
                         <li>🕶️ <span class="text-purple-700 font-black">メカクシ</span>：2巡の間「暗闇状態」に！①現在のTotal不明 ②場に出る数字・計算カードが黒塗り ③全員の所持Gが非公開に！</li>
-                        <li>🎁 <span class="text-yellow-600 font-black">オタカラ</span>：G獲得ギャンブル！（15%:0G / 25%:10G / 25%:20G / 25%:30G / 10%:50G）</li>
+                        <li>🎁 <span class="text-yellow-600 font-black">オタカラ</span>：G獲得ギャンブル！（15%:0G / 25%:10G / 25%:20G / 25%:30G / 10%:50G ※ショップ価格25G）</li>
                         <li>💸 <span class="text-fuchsia-600 font-black">カツアゲ</span>：他プレイヤー全員の所持Gから2割（切り捨て）を強制徴収して総取り！</li>
                     </ul>
                 </div>
@@ -595,25 +596,47 @@
         }
     }
 
-    // カードの販売価格計算
+    // カードの販売価格計算（全体的に約2倍＆数字カードは実質負担額ベースで調整）
     function getCardPrice(card) {
         if (!card) return 999;
-        if (card.isRare) return 25;
+        if (card.type === 'treasure') return 25;
+        if (card.isRare) return 50;
         if (card.type === 'num') {
             const val = Math.abs(parseInt(card.name)) || 0;
-            return val + 5;
+            const isMinus = card.name.toString().includes('-');
+            return val + (isMinus ? 15 : 10);
         }
-        if (card.type === 'draw2') return 15;
-        if (card.type === 'calc' || card.type === 'skip' || card.type === 'rev') return 10;
-        return 15;
+        if (card.type === 'draw2') return 30;
+        if (card.type === 'calc' || card.type === 'skip' || card.type === 'rev') return 20;
+        return 30;
     }
 
-    // ショップラインナップ生成（4枠）
+    function makeRareCard(isNew = false) {
+        const rs = [
+            { name: 'セトギワ', type: 'brink' },
+            { name: 'BOMB', type: 'bomb' },
+            { name: 'タンヤオ', type: 'tanyao' },
+            { name: 'フクブクロ', type: 'bag' },
+            { name: 'トウミン', type: 'sleep' },
+            { name: 'ケタハズレ', type: 'crazy' },
+            { name: 'マネッコ', type: 'mimic' },
+            { name: 'メカクシ', type: 'blind' },
+            { name: 'オタカラ', type: 'treasure' },
+            { name: 'カツアゲ', type: 'extort' }
+        ];
+        const card = { ...rs[Math.floor(Math.random() * rs.length)], isRare: true };
+        if (isNew) { card.isNew = true; card.age = 0; }
+        return card;
+    }
+
+    // ショップラインナップ生成（4枠・必ずレアカードが1枠以上含まれる）
     function generateShop(count = 4) {
-        return Array.from({ length: count }, () => {
-            const c = makeCard(false);
-            return { card: c, price: getCardPrice(c), sold: false };
-        });
+        const cards = Array.from({ length: count }, () => makeCard(false));
+        if (!cards.some(c => c.isRare)) {
+            const rareSlot = Math.floor(Math.random() * count);
+            cards[rareSlot] = makeRareCard(false);
+        }
+        return cards.map(c => ({ card: c, price: getCardPrice(c), sold: false }));
     }
 
     function makeCard(isNew = false) {
@@ -1436,7 +1459,7 @@
             // メカクシ：発動から2巡の間、暗闇状態（重ね掛けでターン加算！）
             nextBlindTurns += gameState.players.length * 2;
         } else if (effCard.type === 'treasure') {
-            // オタカラ：15% 0G / 25% 10G / 25% 20G / 25% 30G / 10% 50G
+            // オタカラ：15% 0G / 25% 10G / 25% 20G / 25% 30G / 10% 50G（期待値20G）
             const r = Math.random();
             if (r < 0.15) treasureAmount = 0;
             else if (r < 0.40) treasureAmount = 10;
