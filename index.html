@@ -305,6 +305,9 @@
                         <span id="my-gold-display">20G</span>
                         <div id="gold-float-anchor" class="absolute -top-2 left-1/2 -translate-x-1/2"></div>
                     </div>
+                    <button onclick="toggleHistory()" id="history-open-btn" class="bg-gradient-to-b from-cyan-400 to-blue-600 text-white font-black px-2.5 py-1 rounded-full border-2 border-white shadow text-xs sm:text-sm flex items-center gap-1 active:scale-90 transition">
+                        <span>📜</span><span class="hidden sm:inline">ログ</span>
+                    </button>
                     <button onclick="toggleShop()" id="shop-open-btn" class="relative bg-gradient-to-b from-emerald-400 to-teal-600 text-white font-black px-3 py-1 rounded-full border-2 border-white shadow text-xs sm:text-sm flex items-center gap-1 active:scale-90 transition">
                         <span>🛒</span><span class="hidden sm:inline">SHOP</span>
                         <span id="shop-new-dot" class="hidden absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white animate-ping"></span>
@@ -326,6 +329,17 @@
                 <div id="field-card-container" class="z-10 flex flex-col items-center justify-center relative">
                     <div id="last-card"></div>
                 </div>
+            </div>
+        </div>
+
+        <!-- 直近1巡ミニ過去ログバー（マネッコ対象が常時ひと目でわかる！） -->
+        <div class="flex justify-center items-center z-[110] px-2 mb-0.5">
+            <div onclick="toggleHistory(true)" id="mini-history-bar" class="cursor-pointer bg-white/85 hover:bg-white backdrop-blur-sm border-2 border-cyan-200 rounded-full px-3 py-0.5 shadow-sm flex items-center gap-1.5 max-w-full overflow-x-auto no-scrollbar active:scale-95 transition">
+                <span class="text-[9px] font-black text-cyan-700 shrink-0">🪞過去1巡ログ:</span>
+                <div id="mini-history-items" class="flex items-center gap-1 text-[9px] font-black text-slate-600 whitespace-nowrap">
+                    <span class="text-slate-400">履歴なし</span>
+                </div>
+                <span class="text-[9px] font-black text-cyan-600 underline shrink-0 ml-1">詳細▸</span>
             </div>
         </div>
 
@@ -366,11 +380,12 @@
             <div id="mimic-selector" class="hidden mb-5 bg-cyan-50 p-3 rounded-2xl border-2 border-cyan-200">
                 <p class="text-xs text-cyan-700 font-black mb-2 uppercase text-center">🪞 コピーするカードを選んで！（過去1巡）</p>
                 <div id="mimic-list" class="flex gap-2 overflow-x-auto py-2 px-1 no-scrollbar items-center justify-start"></div>
+                <div id="mimic-selected-info" class="mt-2 bg-white rounded-xl p-2 border border-cyan-200 text-center text-[11px] font-bold text-slate-600 hidden"></div>
             </div>
 
-            <!-- BOMB用：ターゲット選択エリア -->
+            <!-- ターゲット選択エリア（BOMB / タンヤオ用） -->
             <div id="target-selector" class="hidden mb-5 bg-pink-50 p-3 rounded-2xl border-2 border-pink-200">
-                <p class="text-xs text-pink-600 font-black mb-2.5 uppercase text-center">💣 ターゲットを選んで！</p>
+                <p id="target-selector-label" class="text-xs text-pink-600 font-black mb-2.5 uppercase text-center">🎯 ターゲットを選んで！</p>
                 <div id="target-list" class="flex flex-wrap justify-center gap-2"></div>
             </div>
 
@@ -407,6 +422,32 @@
         </div>
     </div>
 
+    <!-- 📜 過去ログ（カード履歴＆マネッコ確認）モーダル -->
+    <div id="history-modal" class="fixed inset-0 bg-black/70 hidden flex-col items-center justify-center z-[5600] p-4" onclick="toggleHistory(false)">
+        <div class="bg-gradient-to-b from-cyan-50 to-white p-5 sm:p-7 rounded-[2.8rem] w-full max-w-[440px] shadow-2xl border-8 border-cyan-400 relative text-slate-800 max-h-[88vh] flex flex-col" onclick="event.stopPropagation()">
+            <button onclick="toggleHistory(false)" class="absolute top-4 right-4 bg-white hover:bg-slate-100 w-10 h-10 rounded-full flex items-center justify-center text-slate-500 font-bold text-xl shadow">✕</button>
+            <div class="text-center mb-3 shrink-0">
+                <span class="bg-cyan-500 text-white text-[10px] font-black px-3 py-0.5 rounded-full uppercase tracking-widest">CARD LOG & MIMIC</span>
+                <h2 class="text-2xl sm:text-3xl font-black text-cyan-600 italic uppercase mt-1">📜 過去ログ（履歴）</h2>
+                <p class="text-[11px] font-bold text-slate-500 mt-0.5">「マネッコ」でコピーできる過去1巡のカードと全体履歴</p>
+            </div>
+
+            <!-- 🪞 現在マネッコでコピー可能な「過去1巡」カード一覧 -->
+            <div class="bg-cyan-100/70 border-2 border-cyan-300 rounded-2xl p-3 mb-3 shrink-0">
+                <div class="flex items-center justify-between mb-1.5">
+                    <span class="text-xs font-black text-cyan-800">🪞 いま「マネッコ」で選べるカード（過去1巡）</span>
+                    <span id="history-mimic-badge" class="text-[10px] font-black bg-cyan-600 text-white px-2 py-0.5 rounded-full">0枚</span>
+                </div>
+                <div id="history-mimic-cards" class="flex gap-2 overflow-x-auto py-1.5 px-1 no-scrollbar items-center"></div>
+                <div id="history-mimic-shortcut-hint" class="text-[10px] font-bold text-cyan-700 text-center mt-1 hidden">💡 カードをタップすると直接「マネッコ」の発動画面を開けます！</div>
+            </div>
+
+            <!-- 📜 全体のカード履歴タイムライン（最新順） -->
+            <div class="text-xs font-black text-slate-600 mb-1.5 px-1 shrink-0">🕒 全体の過去ログ（新しい順・最大20件）</div>
+            <div id="history-timeline-list" class="flex-1 overflow-y-auto space-y-2 pr-1 min-h-[140px]"></div>
+        </div>
+    </div>
+
     <!-- ルールブックモーダル -->
     <div id="rules-modal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center z-[7000] p-4" onclick="toggleRules()">
         <div class="bg-white p-6 sm:p-8 rounded-[3rem] max-w-md w-full shadow-2xl text-slate-700 max-h-[85vh] overflow-y-auto border-8 border-pink-300" onclick="event.stopPropagation()">
@@ -435,12 +476,12 @@
                     <ul class="space-y-2 text-[11px]">
                         <li>⚡ <span class="text-orange-600 font-black">セトギワ</span>：カウントを99にする＆次の一巡は全員数字カードのみ！（数字がない人はスキップ）</li>
                         <li>💣 <span class="text-red-600 font-black">BOMB</span>：指名した相手に爆弾を押し付ける！手番開始時30%で爆死（数字が全て100に変化）。</li>
-                        <li>🀝 <span class="text-emerald-600 font-black">タンヤオ</span>：全員の手札から絶対値2〜9の数字（±2〜±9）以外を全破棄！</li>
+                        <li>🀝 <span class="text-emerald-600 font-black">タンヤオ</span>：選んだ1人（自分含む）の手札から絶対値2〜9の数字（±2〜±9）以外を全破棄！</li>
                         <li>👜 <span class="text-amber-600 font-black">フクブクロ</span>：自分が数字カードを一気に7枚ドロー！</li>
                         <li>💤 <span class="text-indigo-600 font-black">トウミン</span>：自分は2ターンの間、手番をスキップして安全に回避！</li>
                         <li>🚀 <span class="text-pink-600 font-black">ケタハズレ</span>：自分以外の全員に巨大数字「2147483647」を3枚ずつ贈呈！</li>
                         <li>🪞 <span class="text-cyan-600 font-black">マネッコ</span>：過去1巡に出されたカード履歴から1枚を選び、全く同じ効果として発動！</li>
-                        <li>🕶️ <span class="text-purple-700 font-black">メカクシ</span>：2巡の間「暗闇状態」に！①現在のTotal不明 ②場に出る数字・計算カードが黒塗り ③全員の所持Gが非公開に！</li>
+                        <li>🕶️ <span class="text-purple-700 font-black">メカクシ</span>：2巡の間「暗闇状態」に！①現在のTotal不明 ②場に出る数字・計算カードが黒塗り ③他プレイヤーの所持Gが非公開に！</li>
                         <li>🎁 <span class="text-yellow-600 font-black">オタカラ</span>：G獲得ギャンブル！（15%:0G / 25%:10G / 25%:20G / 25%:30G / 10%:50G ※ショップ価格25G）</li>
                         <li>💸 <span class="text-fuchsia-600 font-black">カツアゲ</span>：他プレイヤー全員の所持Gから2割（切り捨て）を強制徴収して総取り！</li>
                     </ul>
@@ -504,9 +545,9 @@
         'bag': '数字カードを一気に7枚ドロー！',
         'sleep': '2ターンの間、自分の番をスキップして冬眠！',
         'crazy': '自分以外の全員に「2147483647」を3枚ずつ贈呈！',
-        'tanyao': '全員の手札から絶対値2〜9の数字（±2〜±9）以外をすべて破棄！',
+        'tanyao': '選んだ1人（自分含む）の手札から絶対値2〜9の数字（±2〜±9）以外をすべて破棄！',
         'mimic': '過去1巡に出されたカード履歴から1枚を選び、全く同じ効果で発動！',
-        'blind': '2巡の間「暗闇状態」に！合計値・数字系カード・全員の所持Gを隠蔽！',
+        'blind': '2巡の間「暗闇状態」に！合計値・数字系カード・他プレイヤーの所持Gを隠蔽！',
         'treasure': 'ランダムでG獲得！（15%:0G / 25%:10G / 25%:20G / 25%:30G / 10%:50G）',
         'extort': '自分以外の全員から所持Gの2割（切り捨て）を強制徴収して総取り！'
     };
@@ -593,6 +634,111 @@
         } else {
             modal.classList.add('hidden');
             modal.classList.remove('flex');
+        }
+    }
+
+    function toggleHistory(forceState) {
+        const modal = document.getElementById('history-modal');
+        const show = (typeof forceState === 'boolean') ? forceState : modal.classList.contains('hidden');
+        if (show) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            renderHistoryModal();
+        } else {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+    }
+
+    function getCardEffectSummary(c) {
+        if (!c) return '';
+        if (c.type === 'calc') return c.name.includes('×') ? '次の人の出す数字を2倍' : '合計値を半分（切り捨て）';
+        return DESC[c.type] || '';
+    }
+
+    // 過去ログモーダルから直接「マネッコ」の発動画面を開くショートカット
+    function quickSelectMimicFromLog(pastIdx) {
+        if (!gameState || !gameState.started || isVFXRunning || isSuspenseActive) return;
+        const myD = gameState.players.find(p => p.name.trim() === myName.trim());
+        if (!myD || !myD.hand) return;
+        if (gameState.numberOnlyTurns > 0) return alert("現在はセトギワ制限中（数字カードのみ）です！");
+        const hasMimic = myD.hand.some(c => c.type === 'mimic');
+        if (!hasMimic) return;
+        if (currentTab !== 'all' && currentTab !== 'rare') {
+            currentTab = 'all';
+        }
+        const sh = filterAndSortHand(myD.hand);
+        const mimicIdx = sh.findIndex(c => c.type === 'mimic');
+        if (mimicIdx === -1) return;
+        selectedMimicHistoryIdx = pastIdx;
+        toggleHistory(false);
+        selectCard(mimicIdx);
+    }
+
+    function renderHistoryModal() {
+        if (!gameState || !gameState.started) return;
+        const isBlind = (gameState.blindTurns || 0) > 0;
+        const pastHist = getPastRoundHistory();
+        const allHist = gameState.cardHistory || [];
+        const myD = gameState.players.find(p => p.name.trim() === myName.trim());
+        const hasMimicInHand = !!(myD && myD.hand && myD.hand.some(c => c.type === 'mimic'));
+
+        document.getElementById('history-mimic-badge').innerText = `${pastHist.length}枚`;
+        const hintEl = document.getElementById('history-mimic-shortcut-hint');
+        hintEl.classList.toggle('hidden', !(hasMimicInHand && pastHist.length > 0));
+
+        const mimicCardsEl = document.getElementById('history-mimic-cards');
+        if (pastHist.length === 0) {
+            mimicCardsEl.innerHTML = `<div class="text-xs font-bold text-slate-400 py-3 w-full text-center">まだ過去1巡に出されたカードがありません</div>`;
+        } else {
+            mimicCardsEl.innerHTML = pastHist.map((h, idx) => {
+                const eff = h.effectiveCard || h.card;
+                const masked = (isBlind || h.maskedInBlind) && (eff.type === 'num' || eff.type === 'calc');
+                const pName = masked ? '???' : h.player;
+                return `<div onclick="${hasMimicInHand ? `quickSelectMimicFromLog(${idx})` : ''}" class="flex flex-col items-center shrink-0 ${hasMimicInHand ? 'cursor-pointer hover:scale-105 active:scale-95 transition' : ''}">
+                    <div class="transform scale-90 origin-center">
+                        ${buildCardVisualHTML(eff, '', masked, `${pName} (#${h.turnCount || '?'})`)}
+                    </div>
+                    <span class="text-[9px] font-black text-cyan-900 bg-white/90 px-2 py-0.5 rounded-full border border-cyan-300 -mt-1">${idx === pastHist.length - 1 ? '✨最新' : `${pastHist.length - idx}手前`}</span>
+                </div>`;
+            }).join('');
+        }
+
+        const timelineEl = document.getElementById('history-timeline-list');
+        if (allHist.length === 0) {
+            timelineEl.innerHTML = `<div class="text-xs font-bold text-slate-400 py-8 text-center bg-slate-50 rounded-2xl border-2 border-slate-100">まだ場に出されたカードはありません</div>`;
+        } else {
+            const pastIds = new Set(pastHist.map(h => h.id));
+            timelineEl.innerHTML = [...allHist].reverse().map(h => {
+                const c = h.card;
+                const eff = h.effectiveCard || c;
+                const masked = (isBlind || h.maskedInBlind) && (eff.type === 'num' || eff.type === 'calc');
+                const isMimicTargetable = pastIds.has(h.id);
+                const pName = masked ? '???' : h.player;
+                const cardTitle = masked ? '🕶️ SECRET (???)' : (c.type === 'mimic' ? `🪞 マネッコ ➔ ${eff.name}` : `${ICONS[c.type] || ''} ${c.name}`);
+                let detailExtra = '';
+                if (!masked) {
+                    if ((eff.type === 'bomb' || eff.type === 'tanyao') && h.target) detailExtra = `（➔ ${h.target} へ）`;
+                    else if (eff.type === 'treasure' && h.treasureAmount != null) detailExtra = `（+${h.treasureAmount}G）`;
+                    else if (eff.type === 'extort' && h.extortAmount != null) detailExtra = `（+${h.extortAmount}G 徴収）`;
+                    else if (eff.type === 'num') detailExtra = `（+${Math.abs(parseInt(eff.name)) || 0}G獲得）`;
+                }
+                const descText = masked ? 'メカクシ暗闇により内容秘匿' : getCardEffectSummary(eff);
+
+                return `<div class="flex items-center justify-between gap-2 p-2.5 rounded-2xl border-2 ${isMimicTargetable ? 'bg-cyan-50/80 border-cyan-300' : 'bg-slate-50 border-slate-200'}">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <span class="bg-slate-700 text-white text-[9px] font-black px-2 py-1 rounded-lg shrink-0">#${h.turnCount || '?'}</span>
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="text-xs font-black text-slate-800">${cardTitle}</span>
+                                <span class="text-[10px] font-bold text-pink-600">${detailExtra}</span>
+                                ${isMimicTargetable ? '<span class="bg-cyan-500 text-white text-[8px] font-black px-1.5 py-0.2 rounded-full">🪞マネッコ圏内</span>' : ''}
+                            </div>
+                            <div class="text-[10px] font-bold text-slate-500 truncate">出した人: <b>${pName}</b> ｜ ${descText}</div>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
         }
     }
 
@@ -766,7 +912,7 @@
     }
 
     function showGoldFloat(diff) {
-        if (!diff || (gameState && gameState.blindTurns > 0)) return;
+        if (!diff) return;
         const anchor = document.getElementById('gold-float-anchor');
         if (!anchor) return;
         const el = document.createElement('div');
@@ -880,7 +1026,7 @@
         const isMyTurn = (gameState.currentIndex === myIdx && !gameState.gameOver && !isSuspenseActive && !isVFXRunning);
         const isBlind = (gameState.blindTurns > 0);
 
-        document.getElementById('shop-my-gold').innerText = isBlind ? '🪙 ??? G (暗闇中)' : `🪙 ${myD.gold ?? 20}G`;
+        document.getElementById('shop-my-gold').innerText = `🪙 ${myD.gold ?? 20}G`;
         const statusMsg = document.getElementById('shop-status-msg');
         if (isMyTurn) {
             statusMsg.innerHTML = '<span class="text-emerald-600 font-black">✨ あなたのターンです！カードを出す前に購入できます！</span>';
@@ -998,7 +1144,7 @@
         document.getElementById('setup-screen').classList.add('hidden');
         document.getElementById('game-screen').classList.remove('hidden');
 
-        // 自分のデータ＆ゴールド表示
+        // 自分のデータ＆ゴールド表示（メカクシ中でも自分のGは常に表示！）
         const myD = gameState.players.find(p => p.name.trim() === myName.trim());
         if (myD) {
             const curGold = myD.gold ?? 20;
@@ -1006,7 +1152,7 @@
                 showGoldFloat(curGold - prevMyGold);
             }
             prevMyGold = curGold;
-            document.getElementById('my-gold-display').innerText = isBlind ? '???G' : `${curGold}G`;
+            document.getElementById('my-gold-display').innerText = `${curGold}G`;
         }
 
         // トータル表示（メカクシ中は ??? / 100 に隠蔽）
@@ -1075,7 +1221,7 @@
                 triggerVFX(`<div>💰👜</div><div class="text-2xl font-black text-amber-700 mt-2">フクブクロ！ 数字7枚GET！</div>`, '', VFX_BG.bag);
             } else if (eff.type === 'tanyao') {
                 playSynthSE('rare');
-                triggerVFX(`<div class="flex text-4xl bg-white p-3 rounded-2xl border-4 border-emerald-600 shadow-xl font-normal">🀚🀛🀜🀈🀉🀊</div><div class="text-2xl font-black text-emerald-700 mt-3">タンヤオ！ ±2〜9以外全破棄！</div>`, '', VFX_BG.tanyao);
+                triggerVFX(`<div class="flex text-4xl bg-white p-3 rounded-2xl border-4 border-emerald-600 shadow-xl font-normal">🀚🀛🀜🀈🀉🀊</div><div class="text-2xl font-black text-emerald-700 mt-3">タンヤオ！</div><div class="text-sm font-black text-slate-700 mt-1">➔ ${last.target || '全員'} の±2〜9以外全破棄！</div>`, '', VFX_BG.tanyao);
             } else if (eff.type === 'crazy') {
                 playSynthSE('rare');
                 triggerVFX(`<div>🚀💥</div><div class="text-2xl font-black text-pink-600 mt-2">ケタハズレ！</div><div class="text-xs font-black text-slate-700 mt-1">全員に「2147483647」×3枚贈呈！</div>`, 'shake-anim', VFX_BG.crazy);
@@ -1181,7 +1327,8 @@
             const isC = (i === gameState.currentIndex);
             const bombCount = p.hand ? p.hand.filter(c => c.name.includes("💣")).length : 0;
             const hasBomb = bombCount > 0;
-            const goldStr = isBlind ? '???G' : `${p.gold ?? 20}G`;
+            const isMe = (p.name.trim() === myName.trim());
+            const goldStr = (isBlind && !isMe) ? '???G' : `${p.gold ?? 20}G`;
             const handCount = p.hand ? p.hand.length : 0;
 
             return `<div class="player-orbit" style="left: ${cX + rX * Math.cos(ang) - 49}px; top: ${cY + rY * Math.sin(ang) - 27}px;">
@@ -1235,9 +1382,32 @@
             }).join('');
         }
 
-        // ショップモーダルが開いている場合はリアルタイム更新
+        // 直近1巡ミニ過去ログバーのリアルタイム更新
+        const pastForMini = getPastRoundHistory();
+        const miniItemsEl = document.getElementById('mini-history-items');
+        if (miniItemsEl) {
+            if (pastForMini.length === 0) {
+                miniItemsEl.innerHTML = `<span class="text-slate-400">まだ履歴なし</span>`;
+            } else {
+                miniItemsEl.innerHTML = pastForMini.map((h, idx) => {
+                    const eff = h.effectiveCard || h.card;
+                    const masked = (isBlind || h.maskedInBlind) && (eff.type === 'num' || eff.type === 'calc');
+                    const pName = masked ? '???' : h.player;
+                    const cName = masked ? '🕶️???' : eff.name;
+                    const badgeColor = masked
+                        ? 'bg-slate-800 text-purple-200 border-purple-500'
+                        : (eff.isRare ? 'bg-amber-100 text-amber-900 border-amber-400' : (eff.isEvent ? 'bg-yellow-100 text-slate-800 border-yellow-400' : (eff.name.toString().includes('-') ? 'bg-red-100 text-red-700 border-red-300' : 'bg-blue-100 text-blue-700 border-blue-300')));
+                    return `<span class="px-1.5 py-0.2 rounded-full border ${badgeColor}">${pName}:<b>${cName}</b></span>${idx < pastForMini.length - 1 ? '<span class="text-slate-300">➔</span>' : ''}`;
+                }).join('');
+            }
+        }
+
+        // ショップモーダル・過去ログモーダルが開いている場合はリアルタイム更新
         if (!document.getElementById('shop-modal').classList.contains('hidden')) {
             renderShop();
+        }
+        if (!document.getElementById('history-modal').classList.contains('hidden')) {
+            renderHistoryModal();
         }
     }
 
@@ -1273,8 +1443,10 @@
 
         if (card.type === 'mimic') {
             mimicSel.classList.remove('hidden');
+            const infoBox = document.getElementById('mimic-selected-info');
             if (pastHist.length === 0) {
                 document.getElementById('mimic-list').innerHTML = `<div class="text-xs font-bold text-slate-400 py-4 w-full text-center">まだコピーできるカード履歴がありません</div>`;
+                infoBox.classList.add('hidden');
                 selectedMimicHistoryIdx = -1;
             } else {
                 if (selectedMimicHistoryIdx < 0 || selectedMimicHistoryIdx >= pastHist.length) {
@@ -1289,23 +1461,46 @@
                         ${buildCardVisualHTML(eff, '', masked, masked ? '???' : h.player)}
                     </div>`;
                 }).join('');
+
+                const selH = pastHist[selectedMimicHistoryIdx];
+                if (selH) {
+                    const selEff = selH.effectiveCard || selH.card;
+                    const selMasked = (isBlind || selH.maskedInBlind) && (selEff.type === 'num' || selEff.type === 'calc');
+                    infoBox.classList.remove('hidden');
+                    if (selMasked) {
+                        infoBox.innerHTML = `<div class="text-purple-700 font-black">🕶️ コピー対象：SECRET (???)</div><div class="text-[10px] text-slate-500 mt-0.5">暗闇中に出された数字・計算カードです（何が出るかは発動するまで秘密！）</div>`;
+                    } else {
+                        infoBox.innerHTML = `<div class="text-cyan-800 font-black">🪞 コピー対象：「${selEff.name}」 <span class="text-[10px] text-slate-500">（${selH.player} / Turn #${selH.turnCount || '?'}）</span></div><div class="text-[10px] text-slate-600 mt-0.5">${getCardEffectSummary(selEff)}</div>`;
+                    }
+                } else {
+                    infoBox.classList.add('hidden');
+                }
             }
         } else {
             mimicSel.classList.add('hidden');
+            document.getElementById('mimic-selected-info').classList.add('hidden');
             selectedMimicHistoryIdx = -1;
         }
 
-        // BOMB（またはマネッコでBOMBをコピー中）の場合のターゲット選択
-        let needsBombTarget = (card.type === 'bomb');
+        // BOMB・タンヤオ（またはマネッコでそれらをコピー中）の場合のターゲット選択
+        let effTypeForTarget = card.type;
         if (card.type === 'mimic' && selectedMimicHistoryIdx >= 0 && pastHist[selectedMimicHistoryIdx]) {
             const copiedEff = pastHist[selectedMimicHistoryIdx].effectiveCard || pastHist[selectedMimicHistoryIdx].card;
-            if (copiedEff && copiedEff.type === 'bomb') needsBombTarget = true;
+            if (copiedEff) effTypeForTarget = copiedEff.type;
         }
 
-        if (needsBombTarget) {
+        if (effTypeForTarget === 'bomb') {
+            if (targetName === myName) targetName = "";
             tSel.classList.remove('hidden');
+            document.getElementById('target-selector-label').innerText = '💣 爆弾を渡すターゲットを選んで！';
             document.getElementById('target-list').innerHTML = gameState.players.filter(p => p.name !== myName).map(p =>
                 `<button onclick="targetName='${p.name}';selectCard(${i})" class="px-3.5 py-2 rounded-xl text-xs font-black transition ${targetName === p.name ? 'bg-pink-500 text-white border-2 border-pink-600 shadow-md scale-105' : 'bg-white text-slate-600 border-2 border-slate-200'}">${p.name}</button>`
+            ).join('');
+        } else if (effTypeForTarget === 'tanyao') {
+            tSel.classList.remove('hidden');
+            document.getElementById('target-selector-label').innerText = '🀝 タンヤオの対象（自分も選択可）を選んで！';
+            document.getElementById('target-list').innerHTML = gameState.players.map(p =>
+                `<button onclick="targetName='${p.name}';selectCard(${i})" class="px-3.5 py-2 rounded-xl text-xs font-black transition ${targetName === p.name ? 'bg-emerald-500 text-white border-2 border-emerald-600 shadow-md scale-105' : 'bg-white text-slate-600 border-2 border-slate-200'}">${p.name}${p.name === myName ? ' (自分)' : ''}</button>`
             ).join('');
         } else {
             tSel.classList.add('hidden');
@@ -1392,6 +1587,9 @@
         if (effectiveType === 'bomb' && !targetName) {
             return alert("爆弾を渡すターゲットを選んでね！");
         }
+        if (effectiveType === 'tanyao' && !targetName) {
+            return alert("タンヤオの対象プレイヤー（自分も可）を選んでね！");
+        }
 
         const realHandIdx = curP.hand.findIndex(c => c === card);
         if (realHandIdx === -1) return;
@@ -1437,13 +1635,14 @@
         } else if (effCard.type === 'sleep') {
             curP.hibernation = (curP.hibernation || 0) + 2;
         } else if (effCard.type === 'tanyao') {
-            // タンヤオ：絶対値2〜9の数字カード以外全破棄
-            gameState.players.forEach(p => {
-                p.hand = (p.hand || []).filter(c =>
+            // タンヤオ：選んだ対象1人（自分含む）の手札から絶対値2〜9の数字カード以外全破棄
+            const t = gameState.players.find(p => p.name === targetName);
+            if (t) {
+                t.hand = (t.hand || []).filter(c =>
                     c.type === 'num' && !c.isEvent && !c.isRare &&
                     Math.abs(parseInt(c.name)) >= 2 && Math.abs(parseInt(c.name)) <= 9
                 );
-            });
+            }
         } else if (effCard.type === 'crazy') {
             gameState.players.forEach(p => {
                 if (p.name !== myName) {
