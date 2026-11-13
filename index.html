@@ -8,86 +8,317 @@
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
     <style>
-        body { background: linear-gradient(135deg, #fff9c4 0%, #ffc1e3 50%, #b3e5fc 100%); color: #374151; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; font-family: 'Arial Black', sans-serif; touch-action: manipulation; margin: 0; transition: background 0.6s ease; }
-        #stadium-container { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
-        .player-orbit { position: absolute; min-width: 90px; height: 45px; transition: all 0.5s; z-index: 50; display: flex; align-items: center; justify-content: center; }
-        .orbit-arrow { position: absolute; font-size: 34px; color: #ea580c; transition: all 0.5s; z-index: 30; pointer-events: none; text-shadow: -1px -1px 0 white, 1px -1px 0 white, -1px 1px 0 white, 1px 1px 0 white, 2px 2px 5px rgba(0,0,0,0.4); }
-        .card-container { position: relative; flex-shrink: 0; padding: 5px; }
-        .card-base { width: clamp(72px, 20vw, 96px); height: clamp(108px, 30vw, 144px); border: 4px solid white; border-radius: 1rem; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; position: relative; transition: all 0.2s ease-out; box-shadow: 0 6px 15px rgba(0,0,0,0.2); white-space: nowrap; color: white !important; font-size: clamp(1.2rem, 6vw, 1.8rem); text-shadow: 2px 2px 0px rgba(0,0,0,0.3); overflow: hidden; }
-        .card-active { transform: translateY(-15px) scale(1.05); border: 6px solid #fbbf24 !important; z-index: 1500; box-shadow: 0 30px 50px rgba(0,0,0,0.4); }
-        .card-num-plus { background: #3b82f6 !important; }
-        .card-num-minus { background: #ef4444 !important; }
-        .card-event { background: #facc15 !important; color: #1e293b !important; text-shadow: none !important; }
-        .card-rare { font-size: 1.1rem; }
-        .rare-band { position: absolute; left: 0; right: 0; height: 18px; background: rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; font-size: 7px; font-weight: 900; letter-spacing: 0.1em; color: white; z-index: 5; }
-        .band-top { top: 0; border-bottom: 2px solid white; }
-        .band-bottom { bottom: 0; border-top: 2px solid white; }
-        .card-brink { background: linear-gradient(135deg, #f97316, #ef4444) !important; }
-        .card-bomb { background: linear-gradient(135deg, #1e293b, #450a0a) !important; }
-        .card-tanyao { background: linear-gradient(135deg, #10b981, #064e3b) !important; }
-        .card-bag { background: linear-gradient(135deg, #f59e0b, #78350f) !important; }
-        .card-sleep { background: linear-gradient(135deg, #6366f1, #312e81) !important; }
-        .card-crazy { background: linear-gradient(135deg, #ec4899, #831843) !important; }
-        .shine-effect::after { content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(45deg, transparent, rgba(255,255,255,0.6), transparent); transform: rotate(45deg); animation: cardShine 3s infinite; z-index: 20; pointer-events: none; }
-        @keyframes cardShine { 0% { transform: translate(-100%, -100%) rotate(45deg); } 100% { transform: translate(100%, 100%) rotate(45deg); } }
-        @keyframes bombBeat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.3); } }
-        .bomb-pulsing { animation: bombBeat 0.5s infinite; filter: drop-shadow(0 0 20px red); }
-        #vfx-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 5000 !important; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s; }
+        body {
+            background: linear-gradient(135deg, #fff9c4 0%, #ffc1e3 50%, #b3e5fc 100%);
+            color: #374151;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            font-family: 'Arial Black', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+            touch-action: manipulation;
+            margin: 0;
+            transition: background 0.6s ease, filter 0.5s ease;
+            user-select: none;
+        }
+        body.blind-mode-bg {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #090d16 100%) !important;
+            color: #f8fafc;
+        }
+        #stadium-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .player-orbit {
+            position: absolute;
+            min-width: 98px;
+            min-height: 54px;
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .orbit-arrow {
+            position: absolute;
+            font-size: 30px;
+            color: #ea580c;
+            transition: all 0.5s;
+            z-index: 30;
+            pointer-events: none;
+            text-shadow: -1px -1px 0 white, 1px -1px 0 white, -1px 1px 0 white, 1px 1px 0 white, 2px 2px 5px rgba(0,0,0,0.4);
+        }
+        .card-container {
+            position: relative;
+            flex-shrink: 0;
+            padding: 5px;
+        }
+        .card-base {
+            width: clamp(72px, 19vw, 94px);
+            height: clamp(106px, 28vw, 140px);
+            border: 4px solid white;
+            border-radius: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+            transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+            white-space: nowrap;
+            color: white !important;
+            font-size: clamp(1.15rem, 5.5vw, 1.7rem);
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .card-base:active {
+            transform: scale(0.95);
+        }
+        .card-active {
+            transform: translateY(-14px) scale(1.06);
+            border: 5px solid #fbbf24 !important;
+            z-index: 1500;
+            box-shadow: 0 22px 40px rgba(0,0,0,0.4);
+        }
+        .card-num-plus { background: linear-gradient(145deg, #60a5fa, #2563eb) !important; }
+        .card-num-minus { background: linear-gradient(145deg, #f87171, #dc2626) !important; }
+        .card-event { background: linear-gradient(145deg, #fde047, #eab308) !important; color: #1e293b !important; text-shadow: none !important; }
+        .card-rare { font-size: 1.05rem; }
+        .rare-band {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 17px;
+            background: rgba(255,255,255,0.28);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 7px;
+            font-weight: 900;
+            letter-spacing: 0.12em;
+            color: white;
+            z-index: 5;
+        }
+        .band-top { top: 0; border-bottom: 2px solid rgba(255,255,255,0.85); }
+        .band-bottom { bottom: 0; border-top: 2px solid rgba(255,255,255,0.85); }
+
+        /* レアカード10種の個別グラデーション */
+        .card-brink    { background: linear-gradient(135deg, #f97316, #b91c1c) !important; }
+        .card-bomb     { background: linear-gradient(135deg, #334155, #450a0a) !important; }
+        .card-tanyao   { background: linear-gradient(135deg, #10b981, #064e3b) !important; }
+        .card-bag      { background: linear-gradient(135deg, #f59e0b, #78350f) !important; }
+        .card-sleep    { background: linear-gradient(135deg, #6366f1, #312e81) !important; }
+        .card-crazy    { background: linear-gradient(135deg, #ec4899, #831843) !important; }
+        .card-mimic    { background: linear-gradient(135deg, #06b6d4, #1e3a8a) !important; }
+        .card-blind    { background: linear-gradient(135deg, #4c1d95, #090d16) !important; }
+        .card-treasure { background: linear-gradient(135deg, #fde047, #ca8a04, #713f12) !important; }
+        .card-extort   { background: linear-gradient(135deg, #a855f7, #4a044e) !important; }
+        .card-masked   { background: repeating-linear-gradient(45deg, #111827, #111827 10px, #1f2937 10px, #1f2937 20px) !important; border-color: #6b21a8 !important; color: #e9d5ff !important; }
+
+        .shine-effect::after {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.65), transparent);
+            transform: rotate(45deg);
+            animation: cardShine 2.8s infinite;
+            z-index: 20;
+            pointer-events: none;
+        }
+        @keyframes cardShine {
+            0% { transform: translate(-100%, -100%) rotate(45deg); }
+            100% { transform: translate(100%, 100%) rotate(45deg); }
+        }
+        @keyframes bombBeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.28); }
+        }
+        .bomb-pulsing { animation: bombBeat 0.45s infinite; filter: drop-shadow(0 0 22px red); }
+
+        @keyframes screenShake {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            15% { transform: translate(-10px, -6px) rotate(-1.5deg); }
+            30% { transform: translate(10px, 6px) rotate(1.5deg); }
+            45% { transform: translate(-8px, 8px) rotate(-1deg); }
+            60% { transform: translate(8px, -6px) rotate(1deg); }
+            75% { transform: translate(-5px, 4px) rotate(-0.5deg); }
+        }
+        .shake-anim { animation: screenShake 0.55s cubic-bezier(0.36, 0.07, 0.19, 0.97) infinite; }
+
+        @keyframes countPop {
+            0% { transform: scale(1); }
+            40% { transform: scale(1.25); }
+            100% { transform: scale(1); }
+        }
+        .count-pop { animation: countPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+        @keyframes floatUpFade {
+            0% { opacity: 1; transform: translateY(0) scale(0.8); }
+            30% { opacity: 1; transform: translateY(-14px) scale(1.1); }
+            100% { opacity: 0; transform: translateY(-34px) scale(0.95); }
+        }
+        .gold-float {
+            animation: floatUpFade 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            pointer-events: none;
+        }
+
+        #vfx-overlay {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 8000 !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.28s ease;
+            backdrop-filter: blur(3px);
+        }
         .vfx-active { opacity: 1 !important; }
         .vfx-content {
-            font-size: 8rem; filter: drop-shadow(0 0 40px rgba(0,0,0,0.5)); transform: scale(0); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            background-color: rgba(255, 251, 235, 0.95); padding: 2.5rem 4rem; border-radius: 2rem; box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+            font-size: clamp(3.5rem, 15vw, 6.5rem);
+            filter: drop-shadow(0 15px 35px rgba(0,0,0,0.45));
+            transform: scale(0) rotate(-6deg);
+            transition: transform 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: rgba(255, 251, 235, 0.96);
+            padding: 2rem 2.8rem;
+            border-radius: 2.5rem;
+            border: 8px solid white;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            max-width: 92vw;
         }
-        .vfx-active .vfx-content { transform: scale(1); }
-        .field-card-anim { animation: cardEnter 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-        @keyframes cardEnter { 0% { opacity: 0; transform: scale(2.5) rotate(-15deg); } 100% { opacity: 1; transform: scale(1.0) rotate(0); } }
-        .new-badge { position: absolute; top: -5px; right: -10px; background: #ef4444; color: white; font-size: 9px; padding: 2px 8px; border-radius: 20px; border: 2px solid white; z-index: 1600; font-weight: 900; animation: pulse 1s infinite; pointer-events: none; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        .vfx-active .vfx-content { transform: scale(1) rotate(0deg); }
+
+        .field-card-anim { animation: cardEnter 0.42s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes cardEnter {
+            0% { opacity: 0; transform: scale(2.4) rotate(-15deg); }
+            100% { opacity: 1; transform: scale(1.0) rotate(0); }
+        }
+        .new-badge {
+            position: absolute;
+            top: -4px;
+            right: -8px;
+            background: #ef4444;
+            color: white;
+            font-size: 9px;
+            padding: 2px 7px;
+            border-radius: 20px;
+            border: 2px solid white;
+            z-index: 1600;
+            font-weight: 900;
+            animation: pulse 1s infinite;
+            pointer-events: none;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.12); }
+        }
         body.vfx-active-bg { background-image: none !important; }
-        .bg-vfx-brink { background-color: #ffdbbb !important; }
-        .bg-vfx-bomb { background-color: #fca5a5 !important; }
-        .bg-vfx-sleep { background-color: #c7d2fe !important; }
-        .bg-vfx-bag { background-color: #fde68a !important; }
-        .bg-vfx-tanyao { background-color: #a7f3d0 !important; }
-        .bg-vfx-crazy { background-color: #fbcfe8 !important; }
-        .bg-danger { background-color: #dc2626 !important; }
+        .bg-vfx-brink    { background-color: #ffedd5 !important; }
+        .bg-vfx-bomb     { background-color: #fca5a5 !important; }
+        .bg-vfx-sleep    { background-color: #c7d2fe !important; }
+        .bg-vfx-bag      { background-color: #fde68a !important; }
+        .bg-vfx-tanyao   { background-color: #a7f3d0 !important; }
+        .bg-vfx-crazy    { background-color: #fbcfe8 !important; }
+        .bg-vfx-mimic    { background-color: #cffafe !important; }
+        .bg-vfx-blind    { background-color: #090d16 !important; }
+        .bg-vfx-treasure { background-color: #fef08a !important; }
+        .bg-vfx-extort   { background-color: #f3e8ff !important; }
+        .bg-danger       { background-color: #dc2626 !important; }
+
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* 暗闇ヴィネットオーバーレイ */
+        #blind-vignette {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 90;
+            background: radial-gradient(circle at center, transparent 35%, rgba(10, 5, 25, 0.78) 100%);
+            opacity: 0;
+            transition: opacity 0.6s ease;
+        }
+        body.blind-mode-bg #blind-vignette {
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
 
+    <div id="blind-vignette"></div>
     <div id="vfx-overlay"><div id="vfx-item" class="vfx-content"></div></div>
     <audio id="se-play" src="https://actions.google.com/config/audio/g_regular_opening.mp3"></audio>
     <audio id="se-bomb" src="https://actions.google.com/config/audio/explosion.mp3"></audio>
     <audio id="bgm-battle" loop src="https://cdn.pixabay.com/audio/2022/03/10/audio_c33ca4523a.mp3"></audio>
 
-    <div id="setup-screen" class="fixed inset-0 z-[3000] bg-gradient-to-br from-yellow-50 to-orange-100 flex items-center justify-center p-4">
-        <div id="login-box" class="bg-white p-6 rounded-[3rem] border-8 border-yellow-300 w-full max-w-sm shadow-[0_15px_0_#fde047]">
-            <h1 class="text-3xl font-black text-yellow-500 mb-6 italic uppercase text-center">ぱにっく100！</h1>
-            <input id="room-id" type="text" placeholder="部屋の合言葉" class="w-full bg-yellow-50 p-4 rounded-xl mb-4 border-4 border-yellow-200 text-center font-black outline-none text-base">
-            <input id="user-name" type="text" placeholder="あなたの名前" class="w-full bg-yellow-50 p-4 rounded-xl mb-6 border-4 border-yellow-200 text-center font-black outline-none text-base">
-            <button onclick="joinRoom()" class="w-full bg-gradient-to-b from-orange-400 to-red-500 text-white font-black py-4 rounded-2xl shadow-xl text-xl uppercase italic">Entry!</button>
+    <!-- ログイン＆ロビー画面 -->
+    <div id="setup-screen" class="fixed inset-0 z-[3000] bg-gradient-to-br from-yellow-50 via-pink-50 to-sky-100 flex items-center justify-center p-4">
+        <div id="login-box" class="bg-white p-6 md:p-8 rounded-[3rem] border-8 border-yellow-300 w-full max-w-sm shadow-[0_15px_0_#fde047]">
+            <div class="text-center mb-2">
+                <span class="bg-gradient-to-r from-pink-500 to-orange-400 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow">SHOP & GOLD EDITION</span>
+            </div>
+            <h1 class="text-3xl font-black text-yellow-500 mb-6 italic uppercase text-center drop-shadow-sm">ぱにっく100！DX</h1>
+            <input id="room-id" type="text" placeholder="部屋の合言葉" class="w-full bg-yellow-50 p-4 rounded-xl mb-4 border-4 border-yellow-200 text-center font-black outline-none text-base text-slate-700 focus:border-yellow-400 transition">
+            <input id="user-name" type="text" placeholder="あなたの名前" class="w-full bg-yellow-50 p-4 rounded-xl mb-6 border-4 border-yellow-200 text-center font-black outline-none text-base text-slate-700 focus:border-yellow-400 transition">
+            <button onclick="joinRoom()" class="w-full bg-gradient-to-b from-orange-400 to-red-500 active:scale-95 transition text-white font-black py-4 rounded-2xl shadow-xl text-xl uppercase italic">Entry!</button>
         </div>
-        <div id="lobby-box" class="hidden bg-white p-8 rounded-[4rem] border-8 border-blue-300 w-full max-w-sm text-center shadow-[0_15px_0_#93c5fd]">
-            <h2 class="text-3xl font-black mb-6 text-blue-500 uppercase italic">Lobby</h2>
-            <div id="member-list" class="space-y-3 mb-8 text-left p-2 max-h-60 overflow-y-auto"></div>
-            <div id="host-controls" class="hidden"><button onclick="startGame()" class="w-full bg-gradient-to-b from-blue-400 to-indigo-600 text-white font-black py-5 rounded-3xl text-2xl uppercase italic">Start!</button></div>
-            <div id="guest-waiting" class="text-blue-300 animate-pulse font-black text-sm uppercase">Waiting for host...</div>
+        <div id="lobby-box" class="hidden bg-white p-8 rounded-[3.5rem] border-8 border-blue-300 w-full max-w-sm text-center shadow-[0_15px_0_#93c5fd]">
+            <h2 class="text-3xl font-black mb-2 text-blue-500 uppercase italic">Lobby</h2>
+            <p id="lobby-room-label" class="text-xs font-black text-slate-400 mb-4"></p>
+            <div id="member-list" class="space-y-2.5 mb-6 text-left p-2 max-h-60 overflow-y-auto"></div>
+            <div id="host-controls" class="hidden">
+                <button onclick="startGame()" class="w-full bg-gradient-to-b from-blue-400 to-indigo-600 active:scale-95 transition text-white font-black py-4 rounded-3xl text-2xl uppercase italic shadow-lg">Start!</button>
+            </div>
+            <div id="guest-waiting" class="text-blue-400 animate-pulse font-black text-sm uppercase py-2">Waiting for host...</div>
         </div>
     </div>
 
+    <!-- メインゲーム画面 -->
     <div id="game-screen" class="hidden flex-1 flex flex-col relative h-full">
-        <div class="pt-2 p-2 shrink-0 z-[100]">
-            <button onclick="toggleRules()" class="fixed top-16 right-4 z-[150] bg-white w-10 h-10 rounded-full shadow-lg font-black text-pink-500 border-4 border-pink-100 text-xl active:scale-90">？</button>
-            <div class="flex items-center justify-between px-2">
-                <span id="total-display" class="text-3xl font-black text-blue-600 italic tracking-tighter">0 / 100</span>
-                <div class="flex-1 ml-4 h-4 bg-white/60 rounded-full border-2 border-white p-0.5 shadow-inner overflow-hidden">
-                    <div id="progress-bar" class="h-full bg-gradient-to-r from-cyan-400 to-blue-600 rounded-full transition-all duration-1000"></div>
+        <!-- トップヘッダー：合計カウント・プログレスバー・所持G・ショップ・ルール -->
+        <div class="pt-2 px-3 pb-1 shrink-0 z-[120]">
+            <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                    <span id="total-display" class="text-2xl sm:text-3xl font-black text-blue-600 italic tracking-tighter whitespace-nowrap transition-transform">0 / 100</span>
+                </div>
+                <div class="flex-1 mx-1 h-4 bg-white/70 rounded-full border-2 border-white p-0.5 shadow-inner overflow-hidden relative">
+                    <div id="progress-bar" class="h-full bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-600 rounded-full transition-all duration-700" style="width: 0%"></div>
+                </div>
+                <!-- 所持G＆ショップ＆ルールボタン -->
+                <div class="flex items-center gap-1.5 shrink-0">
+                    <div class="relative flex items-center bg-gradient-to-b from-amber-300 to-amber-500 text-slate-900 font-black px-2.5 py-1 rounded-full border-2 border-white shadow text-xs sm:text-sm">
+                        <span class="mr-1">🪙</span>
+                        <span id="my-gold-display">20G</span>
+                        <div id="gold-float-anchor" class="absolute -top-2 left-1/2 -translate-x-1/2"></div>
+                    </div>
+                    <button onclick="toggleShop()" id="shop-open-btn" class="relative bg-gradient-to-b from-emerald-400 to-teal-600 text-white font-black px-3 py-1 rounded-full border-2 border-white shadow text-xs sm:text-sm flex items-center gap-1 active:scale-90 transition">
+                        <span>🛒</span><span class="hidden sm:inline">SHOP</span>
+                        <span id="shop-new-dot" class="hidden absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white animate-ping"></span>
+                        <span id="shop-new-dot-solid" class="hidden absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>
+                    </button>
+                    <button onclick="toggleRules()" class="bg-white w-8 h-8 sm:w-9 sm:h-9 rounded-full shadow font-black text-pink-500 border-2 border-pink-200 text-base active:scale-90 flex items-center justify-center">？</button>
                 </div>
             </div>
+
+            <!-- フィールド状態バッジバー（セトギワ・×2・メカクシ等の発動中ステータス） -->
+            <div id="status-badges" class="flex flex-wrap items-center justify-center gap-1.5 mt-1 min-h-[20px]"></div>
         </div>
 
+        <!-- バトルフィールド（円形スタジアム） -->
         <div id="battle-field" class="flex-1 relative overflow-hidden min-h-0">
             <div id="stadium-container">
                 <div id="player-ring" class="absolute inset-0 pointer-events-none"></div>
@@ -98,68 +329,134 @@
             </div>
         </div>
 
-        <div class="flex justify-center z-[110] mb-0 p-0">
-            <div id="turn-announcer-horiz" class="text-[9px] font-black text-pink-600 bg-white/95 px-4 py-1 rounded-t-lg border-2 border-b-0 border-pink-200 uppercase italic"></div>
+        <!-- ターンアナウンサー＆ミニショップショートカット -->
+        <div class="flex justify-center items-end gap-2 z-[110] mb-0 px-2">
+            <div id="turn-announcer-horiz" class="text-[10px] sm:text-xs font-black text-pink-600 bg-white/95 px-4 py-1 rounded-t-xl border-2 border-b-0 border-pink-200 uppercase italic shadow-sm transition-colors"></div>
         </div>
 
+        <!-- 手札フィルタ＋ショップタブ -->
         <div class="flex z-[110] border-2 border-b-0 border-slate-200 bg-white shadow-sm overflow-hidden">
-            <button onclick="changeTab('all')" id="tab-all" class="flex-1 py-2 font-black text-[10px] border-r-2 border-slate-200 uppercase relative">ALL</button>
-            <button onclick="changeTab('num')" id="tab-num" class="flex-1 py-2 font-black text-[10px] border-r-2 border-slate-200 uppercase relative">すうじ</button>
-            <button onclick="changeTab('event')" id="tab-event" class="flex-1 py-2 font-black text-[10px] border-r-2 border-slate-200 uppercase relative">イベント</button>
-            <button onclick="changeTab('rare')" id="tab-rare" class="flex-1 py-2 font-black text-[10px] uppercase relative">レア</button>
+            <button onclick="changeTab('all')" id="tab-all" class="flex-1 py-2 font-black text-[10px] border-r-2 border-slate-200 uppercase relative text-slate-700">ALL</button>
+            <button onclick="changeTab('num')" id="tab-num" class="flex-1 py-2 font-black text-[10px] border-r-2 border-slate-200 uppercase relative text-slate-700">すうじ</button>
+            <button onclick="changeTab('event')" id="tab-event" class="flex-1 py-2 font-black text-[10px] border-r-2 border-slate-200 uppercase relative text-slate-700">イベント</button>
+            <button onclick="changeTab('rare')" id="tab-rare" class="flex-1 py-2 font-black text-[10px] border-r-2 border-slate-200 uppercase relative text-slate-700">レア</button>
+            <button onclick="toggleShop()" id="tab-shop-btn" class="px-3 sm:px-5 py-2 font-black text-[10px] bg-gradient-to-r from-amber-100 to-yellow-200 text-amber-900 uppercase relative flex items-center justify-center gap-1 active:bg-amber-300">
+                <span>🛒ショップ</span>
+            </button>
         </div>
 
-        <div id="hand-wrapper" class="shrink-0 bg-white/50 border-t-2 border-white/80 z-[1000] flex items-center py-2" style="height: calc(clamp(108px, 30vw, 144px) + 44px);">
-            <div id="my-hand" class="flex gap-2 lg:gap-4 px-4 overflow-x-auto no-scrollbar scroll-smooth items-center h-full w-full relative pb-4"></div>
+        <!-- 手札一覧 -->
+        <div id="hand-wrapper" class="shrink-0 bg-white/55 backdrop-blur-sm border-t-2 border-white/80 z-[1000] flex items-center py-2" style="height: calc(clamp(106px, 28vw, 140px) + 38px);">
+            <div id="my-hand" class="flex gap-2 lg:gap-4 px-4 overflow-x-auto no-scrollbar scroll-smooth items-center h-full w-full relative pb-2"></div>
         </div>
-
     </div>
 
-    <!-- UI overlapping fix: Action Modal instead of fixed bottom slide -->
-    <div id="action-modal" class="fixed inset-0 bg-black/60 hidden flex-col items-center justify-center z-[5000] p-4" onclick="deselectCard()">
-        <div class="bg-white p-6 md:p-8 rounded-[2.5rem] w-full max-w-[320px] shadow-2xl border-8 border-yellow-300 relative" onclick="event.stopPropagation()">
+    <!-- カード使用アクションモーダル -->
+    <div id="action-modal" class="fixed inset-0 bg-black/65 hidden flex-col items-center justify-center z-[5000] p-4" onclick="deselectCard()">
+        <div class="bg-white p-6 md:p-7 rounded-[2.5rem] w-full max-w-[360px] shadow-2xl border-8 border-yellow-300 relative text-slate-800 max-h-[88vh] overflow-y-auto" onclick="event.stopPropagation()">
             <button onclick="deselectCard()" class="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 w-10 h-10 rounded-full flex items-center justify-center text-slate-500 font-bold text-xl transition-colors">✕</button>
-            <div class="text-center mb-6 mt-2">
-                <h3 id="selected-card-name" class="text-3xl font-black italic uppercase text-slate-800">CARD</h3>
-                <p id="selected-card-desc" class="text-sm text-slate-500 mt-2 font-bold"></p>
+            <div class="text-center mb-5 mt-1">
+                <div id="selected-card-preview" class="flex justify-center mb-3"></div>
+                <h3 id="selected-card-name" class="text-2xl font-black italic uppercase text-slate-800">CARD</h3>
+                <p id="selected-card-desc" class="text-xs text-slate-500 mt-1.5 font-bold leading-relaxed"></p>
+                <div id="selected-card-gold-gain" class="hidden mt-2 inline-block bg-amber-100 text-amber-800 border border-amber-300 text-[11px] font-black px-3 py-0.5 rounded-full"></div>
             </div>
-            <div id="target-selector" class="hidden mb-6">
-                <p class="text-xs text-pink-500 font-black mb-3 uppercase text-center">ターゲットを選んで！</p>
+
+            <!-- マネッコ用：過去1巡の履歴選択エリア -->
+            <div id="mimic-selector" class="hidden mb-5 bg-cyan-50 p-3 rounded-2xl border-2 border-cyan-200">
+                <p class="text-xs text-cyan-700 font-black mb-2 uppercase text-center">🪞 コピーするカードを選んで！（過去1巡）</p>
+                <div id="mimic-list" class="flex gap-2 overflow-x-auto py-2 px-1 no-scrollbar items-center justify-start"></div>
+            </div>
+
+            <!-- BOMB用：ターゲット選択エリア -->
+            <div id="target-selector" class="hidden mb-5 bg-pink-50 p-3 rounded-2xl border-2 border-pink-200">
+                <p class="text-xs text-pink-600 font-black mb-2.5 uppercase text-center">💣 ターゲットを選んで！</p>
                 <div id="target-list" class="flex flex-wrap justify-center gap-2"></div>
             </div>
+
             <div id="control-area">
-                <button id="play-btn" onclick="executePlay()" class="w-full bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white font-black py-4 rounded-2xl text-xl shadow-lg transition-all italic uppercase hidden">Play Card!</button>
-                <div id="not-my-turn-msg" class="text-center text-slate-300 text-sm font-black py-4 uppercase italic">Wait for turn</div>
+                <button id="play-btn" onclick="executePlay()" class="w-full bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 active:scale-95 text-white font-black py-4 rounded-2xl text-xl shadow-lg transition-all italic uppercase hidden">Play Card!</button>
+                <div id="not-my-turn-msg" class="text-center text-slate-400 text-sm font-black py-3 uppercase italic">Wait for your turn</div>
             </div>
         </div>
     </div>
 
-    <div id="rules-modal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center z-[7000] p-6" onclick="toggleRules()">
-        <div class="bg-white p-8 rounded-[3.5rem] max-w-sm w-full shadow-2xl text-slate-700 max-h-[80vh] overflow-y-auto" onclick="event.stopPropagation()">
-            <h2 class="text-2xl font-black text-pink-500 mb-6 italic uppercase text-center">Rule Book</h2>
-            <div class="text-[12px] font-bold space-y-4 text-left">
-                <p>● <span class="text-red-500 font-black">100</span>以上で敗北！</p>
-                <p>● 手札が4枚以下の時、自動的に5枚まで補充！</p>
-                <hr>
-                <h3 class="text-center text-orange-400 font-black uppercase">RARE CARDS</h3>
-                <ul class="list-disc pl-4 space-y-2">
-                    <li><span class="text-orange-600 font-black">セトギワ</span>：99にする＆次の一巡は全員数字のみ！</li>
-                    <li><span class="text-red-500 font-black">BOMB</span>：相手に爆弾！30%で爆死。</li>
-                    <li><span class="text-blue-600 font-black">タンヤオ</span>：プラスの2～9以外全破棄！</li>
-                    <li><span class="text-green-600 font-black">フクブクロ</span>：数字を一気に7枚ドロー！</li>
-                    <li><span class="text-indigo-600 font-black">トウミン</span>：2ターン番を回避！</li>
-                    <li><span class="text-pink-600 font-black">ケタハズレ</span>：全員に巨大数字を3枚贈呈！</li>
-                </ul>
+    <!-- 🛒 ショップモーダル（いつでも閲覧可能・自分のターンに購入可能） -->
+    <div id="shop-modal" class="fixed inset-0 bg-black/70 hidden flex-col items-center justify-center z-[5500] p-4" onclick="toggleShop(false)">
+        <div class="bg-gradient-to-b from-amber-50 to-white p-5 sm:p-7 rounded-[2.8rem] w-full max-w-[420px] shadow-2xl border-8 border-amber-400 relative text-slate-800 max-h-[88vh] overflow-y-auto" onclick="event.stopPropagation()">
+            <button onclick="toggleShop(false)" class="absolute top-4 right-4 bg-white hover:bg-slate-100 w-10 h-10 rounded-full flex items-center justify-center text-slate-500 font-bold text-xl shadow">✕</button>
+            <div class="text-center mb-4">
+                <span class="bg-amber-400 text-slate-900 text-[10px] font-black px-3 py-0.5 rounded-full uppercase tracking-widest">CARD SHOP</span>
+                <h2 class="text-2xl sm:text-3xl font-black text-amber-600 italic uppercase mt-1">🛒 ぱにっくショップ</h2>
+                <p id="shop-status-msg" class="text-[11px] font-bold text-slate-500 mt-1">自分のターン終了時にラインナップが4枠更新されます</p>
+                <div class="mt-2 inline-flex items-center gap-1.5 bg-amber-100 border-2 border-amber-300 px-4 py-1 rounded-full font-black text-amber-900 text-sm">
+                    <span>所持ゴールド:</span>
+                    <span id="shop-my-gold" class="text-base text-amber-600">🪙 20G</span>
+                </div>
             </div>
-            <button onclick="toggleRules()" class="w-full mt-8 bg-pink-500 text-white font-black py-4 rounded-2xl shadow-xl uppercase">OK</button>
+
+            <!-- 4枠ラインナップグリッド -->
+            <div id="shop-grid" class="grid grid-cols-2 gap-3 mb-4"></div>
+
+            <div class="bg-slate-100 rounded-2xl p-3 text-[11px] font-bold text-slate-600 space-y-1">
+                <div class="font-black text-slate-700 text-center mb-1">💡 ショップのルール</div>
+                <div>・自分のターン中、<b>カードを場に出す前</b>に購入できます。</div>
+                <div>・購入したカードはすぐ手札に入り、そのターンにすぐ使えます！</div>
+                <div>・数字カードを出した時、<b>|数字| G</b> を獲得します。</div>
+            </div>
         </div>
     </div>
 
+    <!-- ルールブックモーダル -->
+    <div id="rules-modal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center z-[7000] p-4" onclick="toggleRules()">
+        <div class="bg-white p-6 sm:p-8 rounded-[3rem] max-w-md w-full shadow-2xl text-slate-700 max-h-[85vh] overflow-y-auto border-8 border-pink-300" onclick="event.stopPropagation()">
+            <h2 class="text-2xl font-black text-pink-500 mb-4 italic uppercase text-center">📖 Rule Book</h2>
+            <div class="text-xs font-bold space-y-4 text-left leading-relaxed">
+                <div class="bg-pink-50 p-3 rounded-2xl border-2 border-pink-100 space-y-1">
+                    <p>● カウントが <span class="text-red-500 font-black text-sm">100以上</span> になったら敗北！</p>
+                    <p>● 手札が4枚以下の時、ターン終了時に自動的に5枚まで補充！</p>
+                    <p>● <span class="text-blue-600 font-black">×2</span> は「次の人が出す数字を2倍（1人のみ）」、<span class="text-blue-600 font-black">÷2</span> は「現在の合計を半分（切り捨て）」！</p>
+                </div>
+
+                <div class="bg-amber-50 p-3 rounded-2xl border-2 border-amber-200 space-y-1.5">
+                    <h3 class="text-center text-amber-600 font-black uppercase text-sm">🛒 ショップ＆ゴールド(G)</h3>
+                    <p>● <b>初期資金:</b> 全員 <b>20G</b> スタート（所持Gは全員に公開）。</p>
+                    <p>● <b>Gの稼ぎ方:</b> 数字カードを場に出すと、<b>その数字の絶対値分G</b>を獲得！（例：+20なら20G、-5なら5G）</p>
+                    <p>● <b>ショップ購入:</b> いつでも閲覧OK！自分のターン中、カードを出す前に購入でき、すぐ手札に入って即使用可能！自分のターン終了時に4枠が更新されます。</p>
+                    <div class="text-[11px] bg-white p-2 rounded-xl border border-amber-200 mt-1">
+                        <div>・数字カード：<b>|数字| + 5G</b>　・計算/SKIP/REV：<b>10G</b></div>
+                        <div>・DRAW 2：<b>15G</b>　・レアカード全種：<b>25G</b></div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 p-3 rounded-2xl border-2 border-slate-200">
+                    <h3 class="text-center text-orange-500 font-black uppercase text-sm mb-2">✨ RARE CARDS（全10種・各25G）</h3>
+                    <ul class="space-y-2 text-[11px]">
+                        <li>⚡ <span class="text-orange-600 font-black">セトギワ</span>：カウントを99にする＆次の一巡は全員数字カードのみ！（数字がない人はスキップ）</li>
+                        <li>💣 <span class="text-red-600 font-black">BOMB</span>：指名した相手に爆弾を押し付ける！手番開始時30%で爆死（数字が全て100に変化）。</li>
+                        <li>🀝 <span class="text-emerald-600 font-black">タンヤオ</span>：全員の手札から絶対値2〜9の数字（±2〜±9）以外を全破棄！</li>
+                        <li>👜 <span class="text-amber-600 font-black">フクブクロ</span>：自分が数字カードを一気に7枚ドロー！</li>
+                        <li>💤 <span class="text-indigo-600 font-black">トウミン</span>：自分は2ターンの間、手番をスキップして安全に回避！</li>
+                        <li>🚀 <span class="text-pink-600 font-black">ケタハズレ</span>：自分以外の全員に巨大数字「2147483647」を3枚ずつ贈呈！</li>
+                        <li>🪞 <span class="text-cyan-600 font-black">マネッコ</span>：過去1巡に出されたカード履歴から1枚を選び、全く同じ効果として発動！</li>
+                        <li>🕶️ <span class="text-purple-700 font-black">メカクシ</span>：2巡の間「暗闇状態」に！①現在のTotal不明 ②場に出る数字・計算カードが黒塗り ③全員の所持Gが非公開に！</li>
+                        <li>🎁 <span class="text-yellow-600 font-black">オタカラ</span>：G獲得ギャンブル！（15%:0G / 25%:10G / 25%:20G / 25%:30G / 10%:50G）</li>
+                        <li>💸 <span class="text-fuchsia-600 font-black">カツアゲ</span>：他プレイヤー全員の所持Gから2割（切り捨て）を強制徴収して総取り！</li>
+                    </ul>
+                </div>
+            </div>
+            <button onclick="toggleRules()" class="w-full mt-6 bg-pink-500 text-white font-black py-3.5 rounded-2xl shadow-xl uppercase text-base active:scale-95 transition">OK</button>
+        </div>
+    </div>
+
+    <!-- リザルト（ゲーム終了）モーダル -->
     <div id="finish-modal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center z-[6000] p-6 text-center text-white">
-        <div class="bg-white p-10 rounded-[4rem] border-[10px] border-pink-500 shadow-2xl max-w-sm w-full text-slate-800">
+        <div class="bg-white p-8 rounded-[3.5rem] border-[10px] border-pink-500 shadow-2xl max-w-sm w-full text-slate-800">
+            <div class="text-5xl mb-2">💥</div>
             <h2 class="text-4xl font-black mb-2 italic uppercase text-pink-600">Finish!</h2>
-            <p id="loser-text" class="text-xl mb-10 text-slate-600 font-black"></p>
-            <button id="back-lobby-btn" onclick="backToLobby()" class="w-full bg-blue-500 text-white font-black py-5 rounded-2xl text-lg shadow-lg uppercase italic">Lobby</button>
+            <p id="loser-text" class="text-xl mb-4 text-slate-700 font-black whitespace-pre-line"></p>
+            <div id="final-gold-board" class="bg-slate-50 rounded-2xl p-3 mb-6 border-2 border-slate-200 text-left text-xs font-black space-y-1.5"></div>
+            <button id="back-lobby-btn" onclick="backToLobby()" class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-black py-4 rounded-2xl text-lg shadow-lg uppercase italic active:scale-95 transition">Back to Lobby</button>
         </div>
     </div>
 
@@ -172,186 +469,1072 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    
-    let myName = "", roomPath = "", gameState = null, selectedIdx = -1, lastCardID = "", targetName = "", currentTab = "all", isJoinedFlag = false, isVFXRunning = false, lastProcessedVFX = "", lastProcessedSuspenseTurn = -1, isSuspenseActive = false;
 
-    const ICONS = { 'num': '', 'skip': '⏩', 'rev': '↺', 'draw2': '🃏🃏', 'calc': '🧮', 'brink': '⚡🔥', 'bomb': '💣🧨', 'bag': '💰👜', 'sleep': '💤🛌', 'crazy': '🚀💥', 'tanyao': '🀝' };
-    const DESC = { 'num': 'カウント変化。', 'skip': '飛ばす！', 'rev': '逆転！', 'draw2': '2枚引く！', 'calc': '計算！', 'brink': '99固定！', 'bomb': '相手に爆弾！', 'bag': '数字7枚！', 'sleep': '2ターン休み。', 'crazy': '3枚の死。', 'tanyao': 'プラスの2〜9以外廃棄！' };
-    const VFX_BG = { bomb: 'bg-vfx-bomb', brink: 'bg-vfx-brink', sleep: 'bg-vfx-sleep', bag: 'bg-vfx-bag', tanyao: 'bg-vfx-tanyao', crazy: 'bg-vfx-crazy' };
+    let myName = "", roomPath = "", gameState = null, selectedIdx = -1, lastCardID = "", targetName = "", selectedMimicHistoryIdx = -1;
+    let currentTab = "all", isJoinedFlag = false, isVFXRunning = false, lastProcessedVFX = "", lastProcessedSuspenseTurn = -1, isSuspenseActive = false;
+    let prevTotal = 0, prevMyGold = 20, lastKnownTurnForShop = -1, burstAnimatedTurn = -1;
 
-    // 【修正】toggleRulesをrules-modalに繋ぎ直したよ！
-    function toggleRules() { document.getElementById('rules-modal').classList.toggle('hidden'); }
+    const ICONS = {
+        'num': '',
+        'skip': '⏩',
+        'rev': '↺',
+        'draw2': '🃏🃏',
+        'calc': '🧮',
+        'brink': '⚡🔥',
+        'bomb': '💣🧨',
+        'bag': '💰👜',
+        'sleep': '💤🛌',
+        'crazy': '🚀💥',
+        'tanyao': '🀝',
+        'mimic': '🪞🎭',
+        'blind': '🕶️🌑',
+        'treasure': '🎁💎',
+        'extort': '💸😈'
+    };
 
-    async function joinRoom() {
-        const rI = document.getElementById('room-id').value.trim().toLowerCase();
-        const nI = document.getElementById('user-name').value.trim();
-        if (!rI || !nI) return alert("名前と合言葉を入れてね！");
-        myName = nI; roomPath = `panic100_frontier_v116/${rI}`; isJoinedFlag = true;
-        document.getElementById('login-box').classList.add('hidden');
-        document.getElementById('lobby-box').classList.remove('hidden');
+    const DESC = {
+        'num': 'カウントを増減させ、その数字の絶対値分のGを獲得！',
+        'skip': '次のプレイヤーの番を飛ばす！',
+        'rev': 'ターンの進行方向を逆転させる！',
+        'draw2': '自分がカードを2枚引く！',
+        'calc': '計算カード！',
+        'brink': 'カウントを99に固定＆次の一巡は全員数字カードのみ！（数字なしはスキップ）',
+        'bomb': '指名した相手に爆弾を押し付ける！手番開始時30%で爆死！',
+        'bag': '数字カードを一気に7枚ドロー！',
+        'sleep': '2ターンの間、自分の番をスキップして冬眠！',
+        'crazy': '自分以外の全員に「2147483647」を3枚ずつ贈呈！',
+        'tanyao': '全員の手札から絶対値2〜9の数字（±2〜±9）以外をすべて破棄！',
+        'mimic': '過去1巡に出されたカード履歴から1枚を選び、全く同じ効果で発動！',
+        'blind': '2巡の間「暗闇状態」に！合計値・数字系カード・全員の所持Gを隠蔽！',
+        'treasure': 'ランダムでG獲得！（15%:0G / 25%:10G / 25%:20G / 25%:30G / 10%:50G）',
+        'extort': '自分以外の全員から所持Gの2割（切り捨て）を強制徴収して総取り！'
+    };
+
+    const VFX_BG = {
+        bomb: 'bg-vfx-bomb',
+        brink: 'bg-vfx-brink',
+        sleep: 'bg-vfx-sleep',
+        bag: 'bg-vfx-bag',
+        tanyao: 'bg-vfx-tanyao',
+        crazy: 'bg-vfx-crazy',
+        mimic: 'bg-vfx-mimic',
+        blind: 'bg-vfx-blind',
+        treasure: 'bg-vfx-treasure',
+        extort: 'bg-vfx-extort'
+    };
+
+    // Web Audio シンセサイザー効果音（ブラウザ単体でリッチなSEを鳴らす）
+    let audioCtx = null;
+    function playSynthSE(type) {
         try {
-            const snap = await db.ref(roomPath).get();
-            let d = snap.val();
-            if (!d) d = { hostName: myName, players: [{ name: myName, hand: generateHand(7), hibernation: 0 }], started: false, total: 0, currentIndex: 0, direction: 1, lastPlayed: null, turnCount: 0, suspense: null, gameOver: false, numberOnlyTurns: 0, nextNumMultiplier: 1 };
-            else if (!d.players.find(p => p.name === myName)) {
-                if (d.started) return alert("進行中！"); d.players.push({ name: myName, hand: generateHand(7), hibernation: 0 });
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const now = audioCtx.currentTime;
+            if (type === 'coin') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(987.77, now);
+                osc.frequency.setValueAtTime(1318.51, now + 0.07);
+                gain.gain.setValueAtTime(0.18, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(now); osc.stop(now + 0.35);
+            } else if (type === 'buy') {
+                [523.25, 659.25, 783.99, 1046.5].forEach((f, idx) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(f, now + idx * 0.05);
+                    gain.gain.setValueAtTime(0.16, now + idx * 0.05);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.05 + 0.25);
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.start(now + idx * 0.05); osc.stop(now + idx * 0.05 + 0.25);
+                });
+            } else if (type === 'rare') {
+                [440, 554.37, 659.25, 880].forEach((f, idx) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(f, now + idx * 0.06);
+                    gain.gain.setValueAtTime(0.12, now + idx * 0.06);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.45);
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.start(now + idx * 0.06); osc.stop(now + idx * 0.06 + 0.45);
+                });
+            } else if (type === 'burst') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(180, now);
+                osc.frequency.exponentialRampToValueAtTime(35, now + 0.8);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.85);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(now); osc.stop(now + 0.85);
             }
-            await db.ref(roomPath).set(d);
-            db.ref(roomPath).on('value', s => { gameState = s.val(); render(); });
-        } catch (e) { isJoinedFlag = false; render(); }
+        } catch (e) {}
     }
 
-    function triggerVFX(symbol, animateClass = "", bgClass = "") {
-        if (isVFXRunning) return Promise.resolve(); isVFXRunning = true;
-        const overlay = document.getElementById('vfx-overlay'); const item = document.getElementById('vfx-item');
-        item.innerHTML = symbol; item.className = "vfx-content " + (animateClass || "");
-        if(bgClass) { document.body.classList.add(bgClass); document.body.classList.add('vfx-active-bg'); }
-        overlay.classList.add('vfx-active'); 
-        return new Promise(res => setTimeout(() => { overlay.classList.remove('vfx-active'); if(bgClass) { document.body.classList.remove(bgClass); document.body.classList.remove('vfx-active-bg'); } isVFXRunning = false; render(); res(); }, 2200)); 
+    function toggleRules() {
+        document.getElementById('rules-modal').classList.toggle('hidden');
     }
 
-    async function checkBombExplosion() {
-        if (!gameState || isVFXRunning || isSuspenseActive || gameState.gameOver) return;
-        const curP = gameState.players[gameState.currentIndex];
-        if (curP && curP.name === myName && lastProcessedSuspenseTurn !== gameState.turnCount && curP.hand.some(c => c.name.includes("💣"))) {
-            lastProcessedSuspenseTurn = gameState.turnCount;
-            await db.ref(roomPath + "/suspense").set({ active: true, player: myName, turn: gameState.turnCount });
-            isSuspenseActive = true; render();
-            await triggerVFX('💣', 'bomb-pulsing', 'bg-vfx-bomb');
-            if (Math.random() < 0.30) {
-                await db.ref(roomPath + "/suspense").set({ active: true, player: myName, result: 'OUT', turn: gameState.turnCount });
-                await triggerVFX(`<div class="text-black font-black text-6xl">${myName}<br>OUT!</div>`, '', 'bg-danger');
-                try { document.getElementById('se-bomb').play(); } catch(e){}
-                let updatedHand = curP.hand.filter(c => !c.name.includes("💣"));
-                updatedHand = updatedHand.map(c => (c.type === 'num') ? { ...c, name: "100", value: 100 } : c);
-                while(updatedHand.length < 5) updatedHand.push({ name: "100", type: 'num', value: 100, isNew: true });
-                await db.ref(roomPath + "/players/" + gameState.currentIndex + "/hand").set(updatedHand);
-            } else {
-                await db.ref(roomPath + "/suspense").set({ active: true, player: myName, result: 'SAFE', turn: gameState.turnCount });
-                await triggerVFX(`<div class="text-black font-black text-6xl">${myName}<br>SAFE!</div>`, '', 'bg-vfx-sleep');
-            }
-            await db.ref(roomPath + "/suspense").set(null);
-            isSuspenseActive = false; render();
+    function toggleShop(forceState) {
+        const modal = document.getElementById('shop-modal');
+        const show = (typeof forceState === 'boolean') ? forceState : modal.classList.contains('hidden');
+        if (show) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.getElementById('shop-new-dot').classList.add('hidden');
+            document.getElementById('shop-new-dot-solid').classList.add('hidden');
+            renderShop();
+        } else {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
         }
+    }
+
+    // カードの販売価格計算
+    function getCardPrice(card) {
+        if (!card) return 999;
+        if (card.isRare) return 25;
+        if (card.type === 'num') {
+            const val = Math.abs(parseInt(card.name)) || 0;
+            return val + 5;
+        }
+        if (card.type === 'draw2') return 15;
+        if (card.type === 'calc' || card.type === 'skip' || card.type === 'rev') return 10;
+        return 15;
+    }
+
+    // ショップラインナップ生成（4枠）
+    function generateShop(count = 4) {
+        return Array.from({ length: count }, () => {
+            const c = makeCard(false);
+            return { card: c, price: getCardPrice(c), sold: false };
+        });
     }
 
     function makeCard(isNew = false) {
         const r = Math.random();
         let card;
-        if (r < 0.40) card = { name: '+' + (Math.floor(Math.random() * 20) + 1), type: 'num' };
-        else if (r < 0.65) card = { name: '-' + (Math.floor(Math.random() * 20) + 1), type: 'num' };
-        else if (r < 0.85) {
-            const evs = [{ name: 'SKIP', type: 'skip' }, { name: 'REVERSE', type: 'rev' }, { name: 'DRAW 2', type: 'draw2' }, { name: '× 2', type: 'calc' }, { name: '÷ 2', type: 'calc' }];
+        if (r < 0.40) {
+            card = { name: '+' + (Math.floor(Math.random() * 20) + 1), type: 'num' };
+        } else if (r < 0.65) {
+            card = { name: '-' + (Math.floor(Math.random() * 20) + 1), type: 'num' };
+        } else if (r < 0.85) {
+            const evs = [
+                { name: 'SKIP', type: 'skip' },
+                { name: 'REVERSE', type: 'rev' },
+                { name: 'DRAW 2', type: 'draw2' },
+                { name: '× 2', type: 'calc' },
+                { name: '÷ 2', type: 'calc' }
+            ];
             card = { ...evs[Math.floor(Math.random() * evs.length)], isEvent: true };
         } else {
-            const rs = [{ name: 'セトギワ', type: 'brink' }, { name: 'BOMB', type: 'bomb' }, { name: 'タンヤオ', type: 'tanyao' }, { name: 'フクブクロ', type: 'bag' }, { name: 'トウミン', type: 'sleep' }, { name: 'ケタハズレ', type: 'crazy' }];
+            const rs = [
+                { name: 'セトギワ', type: 'brink' },
+                { name: 'BOMB', type: 'bomb' },
+                { name: 'タンヤオ', type: 'tanyao' },
+                { name: 'フクブクロ', type: 'bag' },
+                { name: 'トウミン', type: 'sleep' },
+                { name: 'ケタハズレ', type: 'crazy' },
+                { name: 'マネッコ', type: 'mimic' },
+                { name: 'メカクシ', type: 'blind' },
+                { name: 'オタカラ', type: 'treasure' },
+                { name: 'カツアゲ', type: 'extort' }
+            ];
             card = { ...rs[Math.floor(Math.random() * rs.length)], isRare: true };
         }
-        if (isNew) { card.isNew = true; card.age = 0; } return card;
+        if (isNew) { card.isNew = true; card.age = 0; }
+        return card;
     }
-    function generateHand(c) { return Array.from({length: c}, () => makeCard()); }
-    function shuffleArray(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } return array; }
-    function changeTab(tab) { currentTab = tab; render(); }
-    function filterAndSortHand(hand) { if (!hand) return []; return hand.filter(c => (currentTab === 'all' || (currentTab === 'num' && c.type === 'num' && !c.isEvent && !c.isRare) || (currentTab === 'event' && (c.isEvent && !c.isRare)) || (currentTab === 'rare' && c.isRare))).sort((a, b) => (a.type === 'num' && b.type === 'num') ? parseInt(a.name) - parseInt(b.name) : (a.type || '').localeCompare(b.type || '')); }
+
+    function generateHand(c) {
+        return Array.from({ length: c }, () => makeCard());
+    }
+
+    function createInitialPlayer(name) {
+        return {
+            name: name,
+            hand: generateHand(7),
+            hibernation: 0,
+            gold: 20,
+            shop: generateShop(4)
+        };
+    }
+
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    async function joinRoom() {
+        const rI = document.getElementById('room-id').value.trim().toLowerCase();
+        const nI = document.getElementById('user-name').value.trim();
+        if (!rI || !nI) return alert("名前と合言葉を入れてね！");
+        myName = nI;
+        roomPath = `panic100_frontier_v120/${rI}`;
+        isJoinedFlag = true;
+        document.getElementById('login-box').classList.add('hidden');
+        document.getElementById('lobby-box').classList.remove('hidden');
+        document.getElementById('lobby-room-label').innerText = `ROOM: ${rI.toUpperCase()}`;
+        try {
+            const snap = await db.ref(roomPath).get();
+            let d = snap.val();
+            if (!d) {
+                d = {
+                    hostName: myName,
+                    players: [createInitialPlayer(myName)],
+                    started: false,
+                    total: 0,
+                    currentIndex: 0,
+                    direction: 1,
+                    lastPlayed: null,
+                    turnCount: 0,
+                    suspense: null,
+                    gameOver: false,
+                    numberOnlyTurns: 0,
+                    nextNumMultiplier: 1,
+                    blindTurns: 0,
+                    cardHistory: []
+                };
+            } else if (!d.players.find(p => p.name === myName)) {
+                if (d.started) return alert("現在ゲーム進行中です！");
+                d.players.push(createInitialPlayer(myName));
+            }
+            await db.ref(roomPath).set(d);
+            db.ref(roomPath).on('value', s => {
+                gameState = s.val();
+                render();
+            });
+        } catch (e) {
+            isJoinedFlag = false;
+            render();
+        }
+    }
+
+    function triggerVFX(symbolHtml, animateClass = "", bgClass = "", duration = 2100) {
+        if (isVFXRunning) return Promise.resolve();
+        isVFXRunning = true;
+        const overlay = document.getElementById('vfx-overlay');
+        const item = document.getElementById('vfx-item');
+        item.innerHTML = symbolHtml;
+        item.className = "vfx-content " + (animateClass || "");
+        if (bgClass) {
+            document.body.classList.add(bgClass);
+            document.body.classList.add('vfx-active-bg');
+        }
+        overlay.classList.add('vfx-active');
+        return new Promise(res => setTimeout(() => {
+            overlay.classList.remove('vfx-active');
+            if (bgClass) {
+                document.body.classList.remove(bgClass);
+                document.body.classList.remove('vfx-active-bg');
+            }
+            isVFXRunning = false;
+            render();
+            res();
+        }, duration));
+    }
+
+    function showGoldFloat(diff) {
+        if (!diff || (gameState && gameState.blindTurns > 0)) return;
+        const anchor = document.getElementById('gold-float-anchor');
+        if (!anchor) return;
+        const el = document.createElement('div');
+        const sign = diff > 0 ? '+' : '';
+        el.className = `gold-float font-black text-sm px-2 py-0.5 rounded-full shadow border border-white whitespace-nowrap ${diff > 0 ? 'bg-amber-400 text-slate-900' : 'bg-rose-500 text-white'}`;
+        el.innerText = `${sign}${diff}G`;
+        anchor.appendChild(el);
+        if (diff > 0) playSynthSE('coin');
+        setTimeout(() => el.remove(), 1400);
+    }
+
+    async function checkBombExplosion() {
+        if (!gameState || isVFXRunning || isSuspenseActive || gameState.gameOver) return;
+        const curP = gameState.players[gameState.currentIndex];
+        const bombCount = (curP && curP.hand) ? curP.hand.filter(c => c.name.includes("💣")).length : 0;
+        if (curP && curP.name === myName && lastProcessedSuspenseTurn !== gameState.turnCount && bombCount > 0) {
+            lastProcessedSuspenseTurn = gameState.turnCount;
+            await db.ref(roomPath + "/suspense").set({ active: true, player: myName, turn: gameState.turnCount, bombCount: bombCount });
+            isSuspenseActive = true;
+            render();
+            const bombLabel = bombCount > 1 ? `💣×${bombCount}` : '💣';
+            await triggerVFX(`${bombLabel}<div class="text-xl font-black text-red-600 mt-2">BOMB CHECK...${bombCount > 1 ? ` (${bombCount}個重ね掛け！)` : ''}</div>`, 'bomb-pulsing', 'bg-vfx-bomb');
+            let isExploded = false;
+            for (let b = 0; b < bombCount; b++) {
+                if (Math.random() < 0.30) isExploded = true;
+            }
+            if (isExploded) {
+                await db.ref(roomPath + "/suspense").set({ active: true, player: myName, result: 'OUT', turn: gameState.turnCount, bombCount: bombCount });
+                try { document.getElementById('se-bomb').play(); } catch (e) {}
+                playSynthSE('burst');
+                await triggerVFX(`<div class="text-red-600 font-black text-5xl">💥 ${myName}<br>BOMB OUT!</div><div class="text-sm font-black text-slate-600 mt-2">数字カードが全て100に変化！</div>`, 'shake-anim', 'bg-danger');
+                let updatedHand = curP.hand.filter(c => !c.name.includes("💣"));
+                updatedHand = updatedHand.map(c => (c.type === 'num') ? { ...c, name: "100", value: 100 } : c);
+                while (updatedHand.length < 5) updatedHand.push({ name: "100", type: 'num', value: 100, isNew: true });
+                await db.ref(roomPath + "/players/" + gameState.currentIndex + "/hand").set(updatedHand);
+            } else {
+                await db.ref(roomPath + "/suspense").set({ active: true, player: myName, result: 'SAFE', turn: gameState.turnCount, bombCount: bombCount });
+                await triggerVFX(`<div class="text-indigo-600 font-black text-5xl">😮‍💨 ${myName}<br>SAFE!</div>`, '', 'bg-vfx-sleep');
+            }
+            await db.ref(roomPath + "/suspense").set(null);
+            isSuspenseActive = false;
+            render();
+        }
+    }
+
+    function changeTab(tab) {
+        currentTab = tab;
+        render();
+    }
+
+    function filterAndSortHand(hand) {
+        if (!hand) return [];
+        return hand.filter(c => (
+            currentTab === 'all' ||
+            (currentTab === 'num' && c.type === 'num' && !c.isEvent && !c.isRare) ||
+            (currentTab === 'event' && (c.isEvent && !c.isRare)) ||
+            (currentTab === 'rare' && c.isRare)
+        )).sort((a, b) => (a.type === 'num' && b.type === 'num') ? parseInt(a.name) - parseInt(b.name) : (a.type || '').localeCompare(b.type || ''));
+    }
+
+    // マネッコ用：過去1巡に出されたカード履歴を取得
+    function getPastRoundHistory() {
+        if (!gameState || !gameState.cardHistory || gameState.cardHistory.length === 0) return [];
+        const hist = gameState.cardHistory;
+        // 末尾から遡って「自分が前回出したカード」を探す
+        let lastMyIdx = -1;
+        for (let i = hist.length - 1; i >= 0; i--) {
+            if (hist[i].player === myName) {
+                lastMyIdx = i;
+                break;
+            }
+        }
+        let sliceStart = (lastMyIdx !== -1) ? lastMyIdx + 1 : 0;
+        // 過去1巡分（最大でもプレイヤー人数分）に絞る
+        const maxCount = Math.max(1, gameState.players.length);
+        if (hist.length - sliceStart > maxCount) {
+            sliceStart = hist.length - maxCount;
+        }
+        return hist.slice(sliceStart);
+    }
+
+    // カードHTMLの共通レンダラー
+    function buildCardVisualHTML(c, extraClasses = "", isMasked = false, footerLabel = "") {
+        if (isMasked) {
+            return `<div class="card-base card-masked ${extraClasses} shrink-0 font-black shadow-xl">
+                <div class="rare-band band-top">SECRET</div>
+                <div class="text-3xl mb-1">🕶️</div>
+                <div class="text-xl tracking-widest">???</div>
+                ${footerLabel ? `<div class="text-[8px] mt-2 opacity-75 font-black text-center">${footerLabel}</div>` : ''}
+                <div class="rare-band band-bottom">BLIND</div>
+            </div>`;
+        }
+        const fs = (c.isRare || c.name.toString().length >= 5) ? 'clamp(0.62rem, 3.2vw, 0.85rem)' : 'clamp(1.15rem, 5.5vw, 1.5rem)';
+        const isActuallyRare = c.isRare && c.name !== "💣🧨";
+        const sc = (isActuallyRare || c.name.includes("💣"))
+            ? `card-${c.type} shine-effect`
+            : (c.isEvent ? 'card-event' : (c.name.toString().includes('-') ? 'card-num-minus' : 'card-num-plus'));
+        const bands = isActuallyRare ? '<div class="rare-band band-top">RARE</div><div class="rare-band band-bottom">RARE</div>' : '';
+        const icon = (c.isRare || c.type === 'bomb' || c.isEvent) ? `<div class="text-2xl sm:text-3xl mb-0.5 font-normal leading-none">${ICONS[c.type] || ''}</div>` : '';
+        return `<div class="card-base ${sc} ${extraClasses} shrink-0 font-black shadow-xl" style="font-size: ${fs};">
+            ${bands}${icon}<span>${c.name}</span>
+            ${footerLabel ? `<div class="text-[8px] mt-2 opacity-80 font-black text-center truncate max-w-full px-1">${footerLabel}</div>` : ''}
+        </div>`;
+    }
+
+    function renderShop() {
+        if (!gameState || !gameState.started) return;
+        const myIdx = gameState.players.findIndex(p => p.name.trim() === myName.trim());
+        if (myIdx === -1) return;
+        const myD = gameState.players[myIdx];
+        const isMyTurn = (gameState.currentIndex === myIdx && !gameState.gameOver && !isSuspenseActive && !isVFXRunning);
+        const isBlind = (gameState.blindTurns > 0);
+
+        document.getElementById('shop-my-gold').innerText = isBlind ? '🪙 ??? G (暗闇中)' : `🪙 ${myD.gold ?? 20}G`;
+        const statusMsg = document.getElementById('shop-status-msg');
+        if (isMyTurn) {
+            statusMsg.innerHTML = '<span class="text-emerald-600 font-black">✨ あなたのターンです！カードを出す前に購入できます！</span>';
+        } else {
+            statusMsg.innerHTML = '現在は閲覧モードです（自分のターンに購入可能）';
+        }
+
+        const shopItems = myD.shop || [];
+        const grid = document.getElementById('shop-grid');
+        grid.innerHTML = shopItems.map((item, idx) => {
+            const c = item.card;
+            const price = item.price;
+            const sold = item.sold;
+            const canAfford = (myD.gold ?? 0) >= price;
+            const canBuy = isMyTurn && !sold && canAfford;
+
+            return `<div class="bg-white rounded-3xl p-3 border-4 ${sold ? 'border-slate-200 opacity-50' : (canBuy ? 'border-amber-300 shadow-md' : 'border-slate-200')} flex flex-col items-center justify-between relative">
+                <div class="mb-2 transform scale-90 origin-center">
+                    ${buildCardVisualHTML(c)}
+                </div>
+                <div class="text-[10px] font-bold text-slate-500 text-center line-clamp-1 mb-2 px-1">${DESC[c.type] || ''}</div>
+                ${sold
+                    ? `<div class="w-full bg-slate-200 text-slate-500 font-black py-2 rounded-xl text-xs text-center uppercase">SOLD OUT</div>`
+                    : `<button onclick="buyShopCard(${idx})" ${canBuy ? '' : 'disabled'} class="w-full py-2 rounded-xl font-black text-xs uppercase transition flex items-center justify-center gap-1 ${canBuy ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow active:scale-95' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}">
+                        <span>🪙 ${price}G</span>
+                        <span>${isMyTurn ? (canAfford ? '購入' : 'G不足') : '自ターンのみ'}</span>
+                    </button>`
+                }
+            </div>`;
+        }).join('');
+    }
+
+    async function buyShopCard(shopIdx) {
+        if (!gameState || gameState.gameOver || isVFXRunning || isSuspenseActive) return;
+        const myIdx = gameState.players.findIndex(p => p.name.trim() === myName.trim());
+        if (myIdx === -1 || gameState.currentIndex !== myIdx) return alert("自分のターンにのみ購入できます！");
+        const myD = gameState.players[myIdx];
+        if (!myD.shop || !myD.shop[shopIdx]) return;
+        const item = myD.shop[shopIdx];
+        if (item.sold) return;
+        if ((myD.gold || 0) < item.price) return alert("ゴールド(G)が足りません！");
+
+        myD.gold = (myD.gold || 0) - item.price;
+        item.sold = true;
+        const boughtCard = { ...item.card, isNew: true, age: 0 };
+        if (!myD.hand) myD.hand = [];
+        myD.hand.push(boughtCard);
+
+        playSynthSE('buy');
+        showGoldFloat(-item.price);
+        await db.ref(`${roomPath}/players/${myIdx}`).update({
+            gold: myD.gold,
+            hand: myD.hand,
+            shop: myD.shop
+        });
+        renderShop();
+    }
 
     function render() {
         if (!isJoinedFlag || !gameState) return;
-        if (gameState.gameOver) { document.getElementById('loser-text').innerText = `${gameState.loser} が爆死！\nTotal: ${gameState.total}`; document.getElementById('finish-modal').classList.remove('hidden'); }
-        else { document.getElementById('finish-modal').classList.add('hidden'); }
 
+        const isBlind = (gameState.blindTurns || 0) > 0;
+        document.body.classList.toggle('blind-mode-bg', gameState.started && isBlind && !gameState.gameOver);
+
+        // ゲームオーバー演出＆モーダル
+        if (gameState.gameOver) {
+            if (burstAnimatedTurn !== gameState.turnCount && !isVFXRunning) {
+                burstAnimatedTurn = gameState.turnCount;
+                playSynthSE('burst');
+                triggerVFX(
+                    `<div class="text-6xl mb-2">💥🚨💥</div>
+                     <div class="text-red-600 font-black text-4xl sm:text-5xl italic">100 OVER!!</div>
+                     <div class="text-slate-800 font-black text-xl mt-2">${gameState.loser} がバースト敗北！</div>
+                     <div class="text-sm font-black text-red-500 mt-1">FINAL TOTAL: ${gameState.total}</div>`,
+                    'shake-anim',
+                    'bg-danger',
+                    2600
+                );
+            }
+            document.getElementById('loser-text').innerText = `${gameState.loser} が爆死！\nFinal Total: ${gameState.total}`;
+            const sortedPlayers = [...(gameState.players || [])].sort((a, b) => (b.gold || 0) - (a.gold || 0));
+            document.getElementById('final-gold-board').innerHTML =
+                `<div class="text-center text-slate-400 mb-1 uppercase">🏆 最終所持ゴールド</div>` +
+                sortedPlayers.map((p, i) =>
+                    `<div class="flex justify-between items-center px-2 py-1 rounded-lg ${p.name === gameState.loser ? 'bg-red-100 text-red-700' : 'bg-white text-slate-700'}">
+                        <span>${p.name === gameState.loser ? '💀' : (i === 0 ? '👑' : '・')} ${p.name}</span>
+                        <span class="text-amber-600">🪙 ${p.gold ?? 0}G</span>
+                    </div>`
+                ).join('');
+            document.getElementById('finish-modal').classList.remove('hidden');
+        } else {
+            document.getElementById('finish-modal').classList.add('hidden');
+        }
+
+        // ロビー画面
         if (!gameState.started) {
-            document.getElementById('setup-screen').classList.remove('hidden'); document.getElementById('game-screen').classList.add('hidden');
-            document.getElementById('member-list').innerHTML = gameState.players.map(p => `<div class="p-4 bg-white rounded-2xl border-4 border-slate-100 font-black text-sm flex items-center justify-between shadow-sm"><span>${p.name}</span>${p.name===gameState.hostName?'<span class="bg-yellow-400 text-white px-2 py-0.5 rounded-full text-[8px]">HOST</span>':''}</div>`).join('');
-            document.getElementById('host-controls').classList.toggle('hidden', gameState.hostName !== myName); 
-            document.getElementById('last-card').innerHTML = ""; 
-            lastCardID = ""; 
+            document.getElementById('setup-screen').classList.remove('hidden');
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('member-list').innerHTML = gameState.players.map(p =>
+                `<div class="p-3.5 bg-slate-50 rounded-2xl border-4 border-slate-100 font-black text-sm flex items-center justify-between shadow-sm">
+                    <span class="text-slate-700">${p.name}</span>
+                    <div class="flex items-center gap-1.5">
+                        <span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-[10px]">🪙20G</span>
+                        ${p.name === gameState.hostName ? '<span class="bg-yellow-400 text-white px-2 py-0.5 rounded-full text-[9px]">HOST</span>' : ''}
+                    </div>
+                </div>`
+            ).join('');
+            document.getElementById('host-controls').classList.toggle('hidden', gameState.hostName !== myName);
+            document.getElementById('guest-waiting').classList.toggle('hidden', gameState.hostName === myName);
+            document.getElementById('last-card').innerHTML = "";
+            lastCardID = "";
             return;
         }
 
-        document.getElementById('setup-screen').classList.add('hidden'); document.getElementById('game-screen').classList.remove('hidden');
-        document.getElementById('total-display').innerText = `${gameState.total} / 100`;
-        document.getElementById('progress-bar').style.width = `${Math.min(100, gameState.total)}%`;
-        
+        document.getElementById('setup-screen').classList.add('hidden');
+        document.getElementById('game-screen').classList.remove('hidden');
+
+        // 自分のデータ＆ゴールド表示
+        const myD = gameState.players.find(p => p.name.trim() === myName.trim());
+        if (myD) {
+            const curGold = myD.gold ?? 20;
+            if (curGold !== prevMyGold && prevMyGold !== null) {
+                showGoldFloat(curGold - prevMyGold);
+            }
+            prevMyGold = curGold;
+            document.getElementById('my-gold-display').innerText = isBlind ? '???G' : `${curGold}G`;
+        }
+
+        // トータル表示（メカクシ中は ??? / 100 に隠蔽）
+        const totalEl = document.getElementById('total-display');
+        const progEl = document.getElementById('progress-bar');
+        if (isBlind) {
+            totalEl.innerText = `🕶️ ??? / 100`;
+            totalEl.className = "text-2xl sm:text-3xl font-black text-purple-300 italic tracking-tighter whitespace-nowrap";
+            progEl.style.width = `100%`;
+            progEl.className = "h-full bg-gradient-to-r from-purple-900 via-fuchsia-800 to-slate-900 rounded-full animate-pulse";
+        } else {
+            totalEl.innerText = `${gameState.total} / 100`;
+            totalEl.className = "text-2xl sm:text-3xl font-black text-blue-600 italic tracking-tighter whitespace-nowrap";
+            if (gameState.total !== prevTotal) {
+                totalEl.classList.remove('count-pop');
+                void totalEl.offsetWidth;
+                totalEl.classList.add('count-pop');
+                prevTotal = gameState.total;
+            }
+            progEl.style.width = `${Math.min(100, gameState.total)}%`;
+            progEl.className = "h-full bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-600 rounded-full transition-all duration-700";
+        }
+
+        // ステータスバッジバー更新
+        const badges = [];
+        if (gameState.numberOnlyTurns > 0) {
+            badges.push(`<span class="bg-red-500 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full shadow border border-white animate-pulse">⚡ セトギワ制限：数字のみ (残り${gameState.numberOnlyTurns}手)</span>`);
+        }
+        if (gameState.nextNumMultiplier > 1) {
+            badges.push(`<span class="bg-orange-500 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full shadow border border-white">🔥 次の数字 ×${gameState.nextNumMultiplier}倍！</span>`);
+        }
+        if (isBlind) {
+            badges.push(`<span class="bg-purple-900 text-purple-100 text-[10px] font-black px-2.5 py-0.5 rounded-full shadow border border-purple-400 animate-pulse">🕶️ メカクシ暗闇中 (残り${gameState.blindTurns}手)</span>`);
+        }
+        document.getElementById('status-badges').innerHTML = badges.join('');
+
+        // カード使用時のVFXトリガー
         const last = gameState.lastPlayed;
         if (last && lastProcessedVFX !== last.id) {
-            lastProcessedVFX = last.id; const c = last.card;
-            if(c.type === 'bomb') triggerVFX('💣🧨', '', VFX_BG.bomb); else if(c.type === 'brink') triggerVFX('⚡🔥', '', VFX_BG.brink); else if(c.type === 'sleep') triggerVFX('💤🛌', '', VFX_BG.sleep); else if(c.type === 'bag') triggerVFX('💰👜', '', VFX_BG.bag); else if(c.type === 'tanyao') triggerVFX('<div class="flex text-4xl bg-white p-4 rounded-xl border-4 border-green-600 shadow-xl font-normal">🀚🀛🀜🀈🀉🀊</div>', '', VFX_BG.tanyao); else if(c.type === 'crazy') triggerVFX('🚀💥', '', VFX_BG.crazy); else if(c.type === 'skip') triggerVFX('⏩'); else if(c.type === 'rev') triggerVFX('🔄'); else if(c.type === 'draw2') triggerVFX('🃏🃏');
-            try { document.getElementById('se-play').play().catch(()=>{}); } catch(e){}
+            lastProcessedVFX = last.id;
+            const c = last.card;
+            const eff = last.effectiveCard || c;
+            const maskedPlay = last.maskedInBlind && (eff.type === 'num' || eff.type === 'calc');
+
+            if (c.type === 'mimic') {
+                playSynthSE('rare');
+                const copiedLabel = maskedPlay ? '???' : eff.name;
+                triggerVFX(
+                    `<div>🪞🎭</div>
+                     <div class="text-2xl font-black text-cyan-700 mt-2">マネッコ発動！</div>
+                     <div class="text-lg font-black text-slate-700 mt-1">➔ 「${copiedLabel}」をコピー！</div>`,
+                    '',
+                    VFX_BG.mimic
+                );
+            } else if (eff.type === 'bomb') {
+                playSynthSE('rare');
+                triggerVFX(`<div>💣🧨</div><div class="text-2xl font-black text-red-700 mt-2">BOMB PASS!</div><div class="text-sm font-black text-slate-700 mt-1">➔ ${last.target || ''} に爆弾！</div>`, '', VFX_BG.bomb);
+            } else if (eff.type === 'brink') {
+                playSynthSE('rare');
+                triggerVFX(`<div>⚡🔥</div><div class="text-3xl font-black text-orange-600 mt-2">セトギワ！ COUNT 99!</div><div class="text-xs font-black text-red-600 mt-1">次の一巡は全員「数字カード」のみ！</div>`, 'shake-anim', VFX_BG.brink);
+            } else if (eff.type === 'sleep') {
+                playSynthSE('rare');
+                triggerVFX(`<div>💤🛌</div><div class="text-2xl font-black text-indigo-700 mt-2">トウミン！ 2ターン回避！</div>`, '', VFX_BG.sleep);
+            } else if (eff.type === 'bag') {
+                playSynthSE('rare');
+                triggerVFX(`<div>💰👜</div><div class="text-2xl font-black text-amber-700 mt-2">フクブクロ！ 数字7枚GET！</div>`, '', VFX_BG.bag);
+            } else if (eff.type === 'tanyao') {
+                playSynthSE('rare');
+                triggerVFX(`<div class="flex text-4xl bg-white p-3 rounded-2xl border-4 border-emerald-600 shadow-xl font-normal">🀚🀛🀜🀈🀉🀊</div><div class="text-2xl font-black text-emerald-700 mt-3">タンヤオ！ ±2〜9以外全破棄！</div>`, '', VFX_BG.tanyao);
+            } else if (eff.type === 'crazy') {
+                playSynthSE('rare');
+                triggerVFX(`<div>🚀💥</div><div class="text-2xl font-black text-pink-600 mt-2">ケタハズレ！</div><div class="text-xs font-black text-slate-700 mt-1">全員に「2147483647」×3枚贈呈！</div>`, 'shake-anim', VFX_BG.crazy);
+            } else if (eff.type === 'blind') {
+                playSynthSE('rare');
+                triggerVFX(`<div>🕶️🌑</div><div class="text-3xl font-black text-purple-700 mt-2">メカクシ発動！</div><div class="text-xs font-black text-slate-600 mt-1">2巡の間、合計値・数字・所持Gが暗闇に！</div>`, '', VFX_BG.blind);
+            } else if (eff.type === 'treasure') {
+                playSynthSE('rare');
+                const amt = last.treasureAmount ?? 0;
+                const msg = amt >= 50 ? '👑 大当たり！！ +50G！' : (amt === 0 ? '💀 ハズレ… +0G' : `✨ +${amt}G 獲得！`);
+                triggerVFX(`<div>🎁💎</div><div class="text-2xl font-black text-amber-600 mt-2">オタカラ開封！</div><div class="text-3xl font-black text-slate-800 mt-1">${isBlind ? '+??? G' : msg}</div>`, '', VFX_BG.treasure);
+            } else if (eff.type === 'extort') {
+                playSynthSE('rare');
+                const st = last.extortAmount ?? 0;
+                triggerVFX(`<div>💸😈</div><div class="text-2xl font-black text-purple-700 mt-2">カツアゲ成功！</div><div class="text-2xl font-black text-slate-800 mt-1">全員から2割徴収！ ${isBlind ? '+??? G' : `+${st}G`}</div>`, '', VFX_BG.extort);
+            } else if (!maskedPlay && eff.type === 'skip') {
+                triggerVFX('⏩<div class="text-2xl font-black text-slate-700 mt-2">SKIP!</div>', '', '', 1300);
+            } else if (!maskedPlay && eff.type === 'rev') {
+                triggerVFX('🔄<div class="text-2xl font-black text-slate-700 mt-2">REVERSE!</div>', '', '', 1300);
+            } else if (!maskedPlay && eff.type === 'draw2') {
+                triggerVFX('🃏🃏<div class="text-2xl font-black text-slate-700 mt-2">DRAW 2!</div>', '', '', 1300);
+            }
+            try { document.getElementById('se-play').play().catch(() => {}); } catch (e) {}
         }
 
+        // 爆弾サスペンス同期
         const susp = gameState.suspense;
         if (susp && susp.active && lastProcessedSuspenseTurn !== susp.turn) {
-            if (susp.result) { 
-                lastProcessedSuspenseTurn = susp.turn; 
-                if (susp.result === 'OUT') triggerVFX(`<div class="text-black font-black text-6xl">${susp.player}<br>OUT!</div>`, '', 'bg-danger'); 
-                else if (susp.result === 'SAFE') triggerVFX(`<div class="text-black font-black text-6xl">${susp.player}<br>SAFE!</div>`, '', 'bg-vfx-sleep'); 
+            if (susp.result) {
+                lastProcessedSuspenseTurn = susp.turn;
+                if (susp.result === 'OUT') triggerVFX(`<div class="text-red-600 font-black text-5xl">💥 ${susp.player}<br>BOMB OUT!</div>`, 'shake-anim', 'bg-danger');
+                else if (susp.result === 'SAFE') triggerVFX(`<div class="text-indigo-600 font-black text-5xl">😮‍💨 ${susp.player}<br>SAFE!</div>`, '', 'bg-vfx-sleep');
+            } else if (myName !== susp.player) {
+                const bCnt = susp.bombCount || 1;
+                const bLbl = bCnt > 1 ? `💣×${bCnt}` : '💣';
+                triggerVFX(`${bLbl}<div class="text-xl font-black text-red-600 mt-2">BOMB CHECK...${bCnt > 1 ? ` (${bCnt}個重ね掛け！)` : ''}</div>`, 'bomb-pulsing', 'bg-vfx-bomb');
             }
-            else if (myName !== susp.player) { triggerVFX('💣', 'bomb-pulsing', 'bg-vfx-bomb'); }
         }
 
-        if(!isVFXRunning && !isSuspenseActive) checkBombExplosion();
+        if (!isVFXRunning && !isSuspenseActive) checkBombExplosion();
 
-        if (last && lastCardID !== last.id) {
-            const fs = (last.card.isRare || last.card.name.toString().length >= 6) ? 'clamp(0.6rem, 3.5vw, 0.85rem)' : 'clamp(1.2rem, 6vw, 1.5rem)';
-            let isActuallyRare = last.card.isRare && last.card.name !== "💣🧨";
-            let sc = isActuallyRare ? `card-${last.card.type} shine-effect` : (last.card.isEvent ? 'card-event' : (last.card.name.includes('+') ? 'card-num-plus' : 'card-num-minus'));
-            const bands = isActuallyRare ? '<div class="rare-band band-top">RARE</div><div class="rare-band band-bottom">RARE</div>' : '';
-            const icon = (last.card.isRare || last.card.type === 'bomb') ? `<div class="text-3xl mb-1 font-normal">${ICONS[last.card.type]}</div>` : '';
-            document.getElementById('last-card').innerHTML = `<div class="card-base ${sc} field-card-anim shrink-0 font-black shadow-xl border-b-8" style="font-size: ${fs};">${bands}${icon}${last.card.name}<div class="text-[8px] mt-4 opacity-70 font-black text-center">${last.player}</div></div>`;
-            lastCardID = last.id;
-        } else if (!last) {
+        // フィールド中央の最新カード描画（メカクシ中の数字・計算カードは黒塗り）
+        if (last) {
+            const eff = last.effectiveCard || last.card;
+            const shouldMask = isBlind && (eff.type === 'num' || eff.type === 'calc');
+            const renderKey = `${last.id}_${shouldMask ? 'M' : 'V'}`;
+            if (lastCardID !== renderKey) {
+                const pLabel = shouldMask ? '???' : last.player;
+                const subBadge = (last.card.type === 'mimic' && !shouldMask) ? `🪞(${eff.name})` : '';
+                document.getElementById('last-card').innerHTML = buildCardVisualHTML(
+                    last.card.type === 'mimic' && !shouldMask ? eff : last.card,
+                    'field-card-anim border-b-8',
+                    shouldMask,
+                    `${pLabel} ${subBadge}`
+                );
+                lastCardID = renderKey;
+            }
+        } else {
             document.getElementById('last-card').innerHTML = "";
             lastCardID = "";
         }
 
-        const ring = document.getElementById('player-ring'); const arrows = document.getElementById('arrow-ring'); const cX = ring.clientWidth / 2; const cY = ring.clientHeight / 2; const rX = cX * 0.75; const rY = cY * 0.78; const curP = gameState.players[gameState.currentIndex]; const isT = (curP && curP.name.trim() === myName.trim());
+        // スタジアム（プレイヤー円形配置＋矢印）
+        const ring = document.getElementById('player-ring');
+        const arrows = document.getElementById('arrow-ring');
+        const cX = ring.clientWidth / 2;
+        const cY = ring.clientHeight / 2;
+        const rX = cX * 0.74;
+        const rY = cY * 0.76;
+        const curP = gameState.players[gameState.currentIndex];
+        const isT = (curP && curP.name.trim() === myName.trim());
+
+        // 自分のターンが新しく回ってきたらショップ通知を表示
+        if (isT && lastKnownTurnForShop !== gameState.turnCount) {
+            lastKnownTurnForShop = gameState.turnCount;
+            document.getElementById('shop-new-dot').classList.remove('hidden');
+            document.getElementById('shop-new-dot-solid').classList.remove('hidden');
+        }
+
         const aEl = document.getElementById('turn-announcer-horiz');
-        let multText = (gameState.nextNumMultiplier > 1) ? ` ⚠️次の人のみ数字${gameState.nextNumMultiplier}倍！` : '';
-        aEl.innerText = `NOW: ${curP ? curP.name : ''}'s TURN${gameState.numberOnlyTurns > 0 ? ' ⚠️数字カードのみ！' : ''}${multText}`;
-        if (gameState.numberOnlyTurns > 0) aEl.classList.add('bg-red-500', 'text-white'); else aEl.classList.remove('bg-red-500', 'text-white');
-        document.getElementById('play-btn').classList.toggle('hidden', !isT || isSuspenseActive || isVFXRunning); document.getElementById('not-my-turn-msg').classList.toggle('hidden', isT);
-        arrows.innerHTML = gameState.players.map((p, i) => { const ang = (i * (360 / gameState.players.length) - 90) * (Math.PI / 180); const nAng = ((i + gameState.direction + gameState.players.length) % gameState.players.length * (360 / gameState.players.length) - 90) * (Math.PI / 180); let midAng = (ang + nAng) / 2; if (Math.abs(nAng - ang) > Math.PI) midAng += Math.PI; const rot = (midAng * 180 / Math.PI) + (gameState.direction > 0 ? 90 : 270); return `<div class="orbit-arrow" style="left:${cX + rX * 0.94 * Math.cos(midAng) - 15}px; top:${cY + rY * 0.94 * Math.sin(midAng) - 15}px; transform: rotate(${rot}deg);">➔</div>`; }).join('');
-        ring.innerHTML = gameState.players.map((p, i) => { const ang = (i * (360 / gameState.players.length) - 90) * (Math.PI / 180); const isC = (i === gameState.currentIndex); const hasBomb = p.hand && p.hand.some(c => c.name.includes("💣")); return `<div class="player-orbit" style="left: ${cX + rX * Math.cos(ang) - 45}px; top: ${cY + rY * Math.sin(ang) - 22}px;"><div class="w-full h-full rounded-2xl flex items-center justify-center font-black border-4 ${isC ? 'border-yellow-400 bg-white scale-110 shadow-lg' : 'border-slate-300 bg-white/80 text-slate-700'}"><span class="text-[10px] truncate px-2">${p.name}</span></div><div class="absolute inset-0 pointer-events-none">${p.hibernation > 0 ? `<div class="absolute -bottom-2 -left-4 bg-white text-blue-600 rounded-full w-9 h-9 flex flex-col items-center justify-center text-[8px] shadow-lg border-2 border-blue-400 font-black">💤<span>${p.hibernation}T</span></div>` : ''}${hasBomb ? `<div class="absolute -top-2 -right-4 bg-slate-800 rounded-full w-8 h-8 flex items-center justify-center text-lg shadow-lg bomb-pulse border-2 border-white">💣</div>` : ''}</div></div>`; }).join('');
-        const myD = gameState.players.find(p => p.name.trim() === myName.trim());
-        if (myD && myD.hand) { ["all", "num", "event", "rare"].forEach(tab => { const el = document.getElementById(`tab-${tab}`); const hasNew = myD.hand.some(c => c.isNew && (tab === 'all' || (tab === 'num' && c.type === 'num' && !c.isEvent) || (tab === 'event' && c.isEvent && !c.isRare) || (tab === 'rare' && c.isRare))); el.innerHTML = `${{all:'ALL',num:'すうじ',event:'イベント',rare:'レア'}[tab]}${hasNew ? '<span class="absolute top-0.5 right-1 w-1.5 h-1.5 bg-red-500 rounded-full"></span>' : ''}`; }); const sh = filterAndSortHand(myD.hand); document.getElementById('my-hand').innerHTML = sh.map((c, i) => { const fs = (c.isRare || c.name.toString().length >= 6) ? 'clamp(0.6rem, 3.5vw, 0.85rem)' : 'clamp(1.2rem, 6vw, 1.5rem)'; let isActuallyRare = c.isRare && c.name !== "💣🧨"; let st = (isActuallyRare || c.name.includes("💣")) ? `card-${c.type} shine-effect` : (c.isEvent ? 'card-event' : (c.name.includes('+') ? 'card-num-plus' : 'card-num-minus')); const bands = isActuallyRare ? '<div class="rare-band band-top">RARE</div><div class="rare-band band-bottom">RARE</div>' : ''; const icon = (c.isRare || c.type === 'bomb') ? `<div class="text-3xl mb-1 font-normal">${ICONS[c.type]}</div>` : ''; let isRst = (gameState.numberOnlyTurns > 0 && c.type !== 'num'); let rstStyle = isRst ? 'opacity:0.3; filter:grayscale(100%); pointer-events:none;' : ''; return `<div class="card-container"><button onclick="${isRst?'':`selectCard(${i})`}" class="card-base ${st} font-black shadow-lg shrink-0 ${selectedIdx===i?'card-active':''}" style="font-size: ${fs}; ${rstStyle}">${bands}${icon}${c.name}</button>${c.isNew ? '<span class="new-badge">New</span>' : ''}</div>`; }).join(''); }
+        let multText = (gameState.nextNumMultiplier > 1) ? ` ⚠️次の数字${gameState.nextNumMultiplier}倍！` : '';
+        aEl.innerText = `NOW: ${curP ? curP.name : ''}'s TURN${gameState.numberOnlyTurns > 0 ? ' ⚡数字カードのみ！' : ''}${multText}`;
+        if (gameState.numberOnlyTurns > 0) {
+            aEl.classList.add('bg-red-500', 'text-white');
+        } else {
+            aEl.classList.remove('bg-red-500', 'text-white');
+        }
+
+        document.getElementById('play-btn').classList.toggle('hidden', !isT || isSuspenseActive || isVFXRunning);
+        document.getElementById('not-my-turn-msg').classList.toggle('hidden', isT);
+
+        arrows.innerHTML = gameState.players.map((p, i) => {
+            const ang = (i * (360 / gameState.players.length) - 90) * (Math.PI / 180);
+            const nAng = ((i + gameState.direction + gameState.players.length) % gameState.players.length * (360 / gameState.players.length) - 90) * (Math.PI / 180);
+            let midAng = (ang + nAng) / 2;
+            if (Math.abs(nAng - ang) > Math.PI) midAng += Math.PI;
+            const rot = (midAng * 180 / Math.PI) + (gameState.direction > 0 ? 90 : 270);
+            return `<div class="orbit-arrow" style="left:${cX + rX * 0.94 * Math.cos(midAng) - 15}px; top:${cY + rY * 0.94 * Math.sin(midAng) - 15}px; transform: rotate(${rot}deg);">➔</div>`;
+        }).join('');
+
+        ring.innerHTML = gameState.players.map((p, i) => {
+            const ang = (i * (360 / gameState.players.length) - 90) * (Math.PI / 180);
+            const isC = (i === gameState.currentIndex);
+            const bombCount = p.hand ? p.hand.filter(c => c.name.includes("💣")).length : 0;
+            const hasBomb = bombCount > 0;
+            const goldStr = isBlind ? '???G' : `${p.gold ?? 20}G`;
+            const handCount = p.hand ? p.hand.length : 0;
+
+            return `<div class="player-orbit" style="left: ${cX + rX * Math.cos(ang) - 49}px; top: ${cY + rY * Math.sin(ang) - 27}px;">
+                <div class="w-full h-full px-2.5 py-1 rounded-2xl flex flex-col items-center justify-center font-black border-4 transition-all ${isC ? 'border-yellow-400 bg-white scale-110 shadow-[0_0_20px_rgba(250,204,21,0.7)] text-slate-800' : 'border-slate-300 bg-white/90 text-slate-700'}">
+                    <span class="text-[10px] truncate max-w-[82px] leading-tight">${p.name}</span>
+                    <div class="flex items-center gap-1.5 mt-0.5 text-[9px]">
+                        <span class="text-amber-600 bg-amber-50 px-1.5 rounded-full border border-amber-200">🪙${goldStr}</span>
+                        <span class="text-slate-500">🃏${handCount}</span>
+                    </div>
+                </div>
+                <div class="absolute inset-0 pointer-events-none">
+                    ${isC ? `<div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-[7px] font-black px-2 py-0.2 rounded-full shadow border border-white">TURN</div>` : ''}
+                    ${p.hibernation > 0 ? `<div class="absolute -bottom-2 -left-3 bg-white text-blue-600 rounded-full w-8 h-8 flex flex-col items-center justify-center text-[8px] shadow-lg border-2 border-blue-400 font-black">💤<span>${p.hibernation}T</span></div>` : ''}
+                    ${hasBomb ? `<div class="absolute -top-2 -right-3 bg-slate-800 text-white rounded-full min-w-[32px] h-8 px-1 flex items-center justify-center text-xs font-black shadow-lg bomb-pulsing border-2 border-white">💣${bombCount > 1 ? `×${bombCount}` : ''}</div>` : ''}
+                </div>
+            </div>`;
+        }).join('');
+
+        // 手札タブ＆カード一覧描画
+        if (myD && myD.hand) {
+            ["all", "num", "event", "rare"].forEach(tab => {
+                const el = document.getElementById(`tab-${tab}`);
+                const isSelectedTab = (currentTab === tab);
+                el.className = `flex-1 py-2 font-black text-[10px] border-r-2 border-slate-200 uppercase relative transition ${isSelectedTab ? 'bg-pink-500 text-white' : 'bg-white text-slate-700'}`;
+                const hasNew = myD.hand.some(c => c.isNew && (
+                    tab === 'all' ||
+                    (tab === 'num' && c.type === 'num' && !c.isEvent) ||
+                    (tab === 'event' && c.isEvent && !c.isRare) ||
+                    (tab === 'rare' && c.isRare)
+                ));
+                el.innerHTML = `${{ all: 'ALL', num: 'すうじ', event: 'イベント', rare: 'レア' }[tab]}${hasNew ? '<span class="absolute top-1 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>' : ''}`;
+            });
+
+            const sh = filterAndSortHand(myD.hand);
+            document.getElementById('my-hand').innerHTML = sh.map((c, i) => {
+                let isRst = (gameState.numberOnlyTurns > 0 && c.type !== 'num');
+                let rstStyle = isRst ? 'opacity:0.32; filter:grayscale(100%); pointer-events:none;' : '';
+                const fs = (c.isRare || c.name.toString().length >= 5) ? 'clamp(0.62rem, 3.2vw, 0.85rem)' : 'clamp(1.15rem, 5.5vw, 1.5rem)';
+                let isActuallyRare = c.isRare && c.name !== "💣🧨";
+                let st = (isActuallyRare || c.name.includes("💣"))
+                    ? `card-${c.type} shine-effect`
+                    : (c.isEvent ? 'card-event' : (c.name.toString().includes('-') ? 'card-num-minus' : 'card-num-plus'));
+                const bands = isActuallyRare ? '<div class="rare-band band-top">RARE</div><div class="rare-band band-bottom">RARE</div>' : '';
+                const icon = (c.isRare || c.type === 'bomb' || c.isEvent) ? `<div class="text-2xl sm:text-3xl mb-0.5 font-normal leading-none">${ICONS[c.type] || ''}</div>` : '';
+                return `<div class="card-container">
+                    <button onclick="${isRst ? '' : `selectCard(${i})`}" class="card-base ${st} font-black shadow-lg shrink-0 ${selectedIdx === i ? 'card-active' : ''}" style="font-size: ${fs}; ${rstStyle}">
+                        ${bands}${icon}<span>${c.name}</span>
+                    </button>
+                    ${c.isNew ? '<span class="new-badge">New</span>' : ''}
+                </div>`;
+            }).join('');
+        }
+
+        // ショップモーダルが開いている場合はリアルタイム更新
+        if (!document.getElementById('shop-modal').classList.contains('hidden')) {
+            renderShop();
+        }
     }
+
     function selectCard(i) {
         if (isVFXRunning || isSuspenseActive) return;
-        const myD = gameState.players.find(p => p.name.trim() === myName.trim()); const card = filterAndSortHand(myD.hand)[i];
+        const myD = gameState.players.find(p => p.name.trim() === myName.trim());
+        if (!myD || !myD.hand) return;
+        const card = filterAndSortHand(myD.hand)[i];
+        if (!card) return;
         if (gameState.numberOnlyTurns > 0 && card.type !== 'num') return;
+
         selectedIdx = i;
-        document.getElementById('selected-card-name').innerText = card.name; document.getElementById('selected-card-desc').innerText = (card.type === 'calc') ? (card.name.includes('×') ? '次の人の出す数字を2倍にする！(1人のみ)' : '合計値を半分にする！') : (DESC[card.type] || 'CARD'); const tSel = document.getElementById('target-selector');
-        if (card.type === 'bomb') { tSel.classList.remove('hidden'); document.getElementById('target-list').innerHTML = gameState.players.filter(p => p.name !== myName).map(p => `<button onclick="targetName='${p.name}';selectCard(${i})" class="px-3 py-1.5 rounded-lg text-sm font-black ${targetName===p.name?'bg-pink-500 text-white border-2 border-pink-500':'bg-white text-slate-500 border-2 border-slate-200'}">${p.name}</button>`).join(''); }
-        else { tSel.classList.add('hidden'); targetName = ""; }
-        const amodal = document.getElementById('action-modal'); 
-        amodal.classList.remove('hidden'); amodal.classList.add('flex');
+        document.getElementById('selected-card-preview').innerHTML = buildCardVisualHTML(card);
+        document.getElementById('selected-card-name').innerText = card.name;
+        document.getElementById('selected-card-desc').innerText = (card.type === 'calc')
+            ? (card.name.includes('×') ? '次の人の出す数字を2倍にする！（1人のみ）' : '現在の合計値を半分（切り捨て）にする！')
+            : (DESC[card.type] || 'CARD');
+
+        // 数字カードの場合、獲得できるGを表示
+        const goldGainEl = document.getElementById('selected-card-gold-gain');
+        if (card.type === 'num') {
+            const gain = Math.abs(parseInt(card.name)) || 0;
+            goldGainEl.innerText = `🪙 出せれば +${gain}G 獲得！`;
+            goldGainEl.classList.remove('hidden');
+        } else {
+            goldGainEl.classList.add('hidden');
+        }
+
+        // マネッコ選択時：過去1巡の履歴表示
+        const mimicSel = document.getElementById('mimic-selector');
+        const tSel = document.getElementById('target-selector');
+        const pastHist = getPastRoundHistory();
+
+        if (card.type === 'mimic') {
+            mimicSel.classList.remove('hidden');
+            if (pastHist.length === 0) {
+                document.getElementById('mimic-list').innerHTML = `<div class="text-xs font-bold text-slate-400 py-4 w-full text-center">まだコピーできるカード履歴がありません</div>`;
+                selectedMimicHistoryIdx = -1;
+            } else {
+                if (selectedMimicHistoryIdx < 0 || selectedMimicHistoryIdx >= pastHist.length) {
+                    selectedMimicHistoryIdx = pastHist.length - 1; // デフォルトで最新を選択
+                }
+                const isBlind = (gameState.blindTurns || 0) > 0;
+                document.getElementById('mimic-list').innerHTML = pastHist.map((h, hIdx) => {
+                    const eff = h.effectiveCard || h.card;
+                    const masked = (isBlind || h.maskedInBlind) && (eff.type === 'num' || eff.type === 'calc');
+                    const isSel = (selectedMimicHistoryIdx === hIdx);
+                    return `<div onclick="selectedMimicHistoryIdx=${hIdx};selectCard(${i})" class="cursor-pointer transition transform ${isSel ? 'scale-105 ring-4 ring-cyan-400 rounded-2xl' : 'opacity-70 scale-95'}">
+                        ${buildCardVisualHTML(eff, '', masked, masked ? '???' : h.player)}
+                    </div>`;
+                }).join('');
+            }
+        } else {
+            mimicSel.classList.add('hidden');
+            selectedMimicHistoryIdx = -1;
+        }
+
+        // BOMB（またはマネッコでBOMBをコピー中）の場合のターゲット選択
+        let needsBombTarget = (card.type === 'bomb');
+        if (card.type === 'mimic' && selectedMimicHistoryIdx >= 0 && pastHist[selectedMimicHistoryIdx]) {
+            const copiedEff = pastHist[selectedMimicHistoryIdx].effectiveCard || pastHist[selectedMimicHistoryIdx].card;
+            if (copiedEff && copiedEff.type === 'bomb') needsBombTarget = true;
+        }
+
+        if (needsBombTarget) {
+            tSel.classList.remove('hidden');
+            document.getElementById('target-list').innerHTML = gameState.players.filter(p => p.name !== myName).map(p =>
+                `<button onclick="targetName='${p.name}';selectCard(${i})" class="px-3.5 py-2 rounded-xl text-xs font-black transition ${targetName === p.name ? 'bg-pink-500 text-white border-2 border-pink-600 shadow-md scale-105' : 'bg-white text-slate-600 border-2 border-slate-200'}">${p.name}</button>`
+            ).join('');
+        } else {
+            tSel.classList.add('hidden');
+            targetName = "";
+        }
+
+        const amodal = document.getElementById('action-modal');
+        amodal.classList.remove('hidden');
+        amodal.classList.add('flex');
         render();
     }
+
     function deselectCard() {
-        selectedIdx = -1; targetName = "";
-        const amodal = document.getElementById('action-modal'); 
-        amodal.classList.add('hidden'); amodal.classList.remove('flex');
-        render(); 
+        selectedIdx = -1;
+        targetName = "";
+        selectedMimicHistoryIdx = -1;
+        const amodal = document.getElementById('action-modal');
+        amodal.classList.add('hidden');
+        amodal.classList.remove('flex');
+        render();
     }
-    function startGame() { db.ref(roomPath).update({ started: true, players: shuffleArray([...gameState.players]), total: 0, currentIndex: 0, direction: 1, turnCount: 0, suspense: null, gameOver: false, lastPlayed: null, numberOnlyTurns: 0, nextNumMultiplier: 1 }); }
-    async function backToLobby() { const rPs = gameState.players.map(p => ({ name: p.name, hand: generateHand(7), hibernation: 0 })); await db.ref(roomPath).update({ started: false, gameOver: false, players: rPs, total: 0, currentIndex: 0, lastPlayed: null, turnCount: 0, suspense: null, numberOnlyTurns: 0, nextNumMultiplier: 1 }); }
-    function executePlay() { const curP = gameState.players[gameState.currentIndex]; if (curP.name !== myName) return; const sh = filterAndSortHand(curP.hand); const card = sh[selectedIdx]; if (card.type === 'bomb' && !targetName) return alert("ターゲットを選んで！"); playCard(curP.hand.findIndex(c => c === card)); deselectCard(); }
-    function playCard(idx) { const curP = gameState.players[gameState.currentIndex]; const card = curP.hand.splice(idx, 1)[0]; let nT = gameState.total;
-        let nextNumOnlyTurns = (gameState.numberOnlyTurns || 0); if (nextNumOnlyTurns > 0) nextNumOnlyTurns--;
-        let multiplier = (gameState.nextNumMultiplier || 1);
-        if (card.type === 'num') { nT += parseInt(card.name) * multiplier; } else if (card.type === 'calc' && !card.name.includes('×')) { nT = Math.floor(nT / 2); } else if (card.type === 'brink') { nT = 99; nextNumOnlyTurns = gameState.players.length - 1; }
-        else if (card.type === 'bag') { for(let i=0; i<7; i++) { const v = Math.floor(Math.random()*20)+1; const s = Math.random()<0.5?'+':'-'; curP.hand.push({name:s+v,type:'num',isNew:true}); }} else if (card.type === 'sleep') curP.hibernation = 2; 
-        else if (card.type === 'tanyao') {
-            gameState.players.forEach(p => {
-                p.hand = p.hand.filter(c => c.type === 'num' && !c.isEvent && !c.isRare && parseInt(c.name) >= 2 && parseInt(c.name) <= 9);
-            });
+
+    function startGame() {
+        const initPlayers = shuffleArray([...gameState.players]).map(p => ({
+            ...p,
+            hand: generateHand(7),
+            hibernation: 0,
+            gold: 20,
+            shop: generateShop(4)
+        }));
+        db.ref(roomPath).update({
+            started: true,
+            players: initPlayers,
+            total: 0,
+            currentIndex: 0,
+            direction: 1,
+            turnCount: 0,
+            suspense: null,
+            gameOver: false,
+            lastPlayed: null,
+            numberOnlyTurns: 0,
+            nextNumMultiplier: 1,
+            blindTurns: 0,
+            cardHistory: []
+        });
+    }
+
+    async function backToLobby() {
+        const rPs = gameState.players.map(p => createInitialPlayer(p.name));
+        await db.ref(roomPath).update({
+            started: false,
+            gameOver: false,
+            players: rPs,
+            total: 0,
+            currentIndex: 0,
+            direction: 1,
+            lastPlayed: null,
+            turnCount: 0,
+            suspense: null,
+            numberOnlyTurns: 0,
+            nextNumMultiplier: 1,
+            blindTurns: 0,
+            cardHistory: []
+        });
+    }
+
+    function executePlay() {
+        const curP = gameState.players[gameState.currentIndex];
+        if (!curP || curP.name !== myName) return;
+        const sh = filterAndSortHand(curP.hand);
+        const card = sh[selectedIdx];
+        if (!card) return;
+
+        let copiedCard = null;
+        if (card.type === 'mimic') {
+            const pastHist = getPastRoundHistory();
+            if (pastHist.length === 0 || selectedMimicHistoryIdx < 0 || !pastHist[selectedMimicHistoryIdx]) {
+                return alert("コピーできるカード履歴がありません！");
+            }
+            copiedCard = pastHist[selectedMimicHistoryIdx].effectiveCard || pastHist[selectedMimicHistoryIdx].card;
         }
-        else if (card.type === 'crazy') gameState.players.forEach(p => { if(p.name !== myName) for(let k=0; k<3; k++) p.hand.push({name: '2147483647', type:'num',isNew:true}); });
-        else if (card.type === 'bomb') { const t = gameState.players.find(p => p.name === targetName); if(t) t.hand.push({ name: "💣🧨", type:'bomb', isNew:true, isEvent: true }); }
-        let step = card.type === 'skip' ? 2 : 1;
-        if (card.type === 'rev') gameState.direction *= -1; else if (card.type === 'draw2') for(let i=0; i<2; i++) curP.hand.push(makeCard(true));
-        if (card.type === 'calc' && card.name.includes('×')) multiplier = 2; else multiplier = 1;
-        gameState.players.forEach(p => { p.hand.forEach(c => { if(c.isNew) { c.age = (c.age || 0) + 1; if(c.age > 1) delete c.isNew; } }); while(p.hand.length < 5) p.hand.push(makeCard(true)); }); nT = Math.max(0, nT); let nIdx = (gameState.currentIndex + gameState.direction * step + gameState.players.length) % gameState.players.length; while(true) { let skipThis = false; let cp = gameState.players[nIdx]; if (cp.hibernation > 0) { cp.hibernation--; if (nextNumOnlyTurns > 0) nextNumOnlyTurns--; skipThis = true; } else if (nextNumOnlyTurns > 0 && cp.hand && !cp.hand.some(c => c.type === 'num')) { nextNumOnlyTurns--; skipThis = true; } if (!skipThis) break; nIdx = (nIdx + gameState.direction + gameState.players.length) % gameState.players.length; } db.ref(roomPath).update({ total: nT, currentIndex: nIdx, direction: gameState.direction, players: gameState.players, lastPlayed: { card, player: myName, id: Date.now() }, turnCount: gameState.turnCount + 1, gameOver: nT >= 100, loser: nT >= 100 ? myName : null, numberOnlyTurns: nextNumOnlyTurns, nextNumMultiplier: multiplier });
+
+        const effectiveType = copiedCard ? copiedCard.type : card.type;
+        if (effectiveType === 'bomb' && !targetName) {
+            return alert("爆弾を渡すターゲットを選んでね！");
+        }
+
+        const realHandIdx = curP.hand.findIndex(c => c === card);
+        if (realHandIdx === -1) return;
+        playCard(realHandIdx, copiedCard);
+        deselectCard();
+    }
+
+    function playCard(idx, mimicCopiedCard = null) {
+        const curP = gameState.players[gameState.currentIndex];
+        const card = curP.hand.splice(idx, 1)[0];
+        const effCard = mimicCopiedCard ? { ...mimicCopiedCard } : card;
+
+        let nT = gameState.total;
+        let nextNumOnlyTurns = (gameState.numberOnlyTurns || 0);
+        if (nextNumOnlyTurns > 0) nextNumOnlyTurns--;
+
+        let nextBlindTurns = (gameState.blindTurns || 0);
+        const wasBlindWhenPlayed = nextBlindTurns > 0;
+        if (nextBlindTurns > 0) nextBlindTurns--;
+
+        let multiplier = (gameState.nextNumMultiplier || 1);
+        let treasureAmount = null;
+        let extortAmount = null;
+
+        // カード効果の適用（effCardベースなのでマネッコでも完全再現）
+        if (effCard.type === 'num') {
+            const rawVal = parseInt(effCard.name) || 0;
+            nT += rawVal * multiplier;
+            // 数字カードを場に出した時、その数字の絶対値分だけGを獲得
+            const earnedGold = Math.abs(rawVal);
+            curP.gold = (curP.gold ?? 20) + earnedGold;
+        } else if (effCard.type === 'calc' && !effCard.name.includes('×')) {
+            nT = Math.floor(nT / 2);
+        } else if (effCard.type === 'brink') {
+            nT = 99;
+            nextNumOnlyTurns += Math.max(1, gameState.players.length - 1);
+        } else if (effCard.type === 'bag') {
+            for (let i = 0; i < 7; i++) {
+                const v = Math.floor(Math.random() * 20) + 1;
+                const s = Math.random() < 0.5 ? '+' : '-';
+                curP.hand.push({ name: s + v, type: 'num', isNew: true });
+            }
+        } else if (effCard.type === 'sleep') {
+            curP.hibernation = (curP.hibernation || 0) + 2;
+        } else if (effCard.type === 'tanyao') {
+            // タンヤオ：絶対値2〜9の数字カード以外全破棄
+            gameState.players.forEach(p => {
+                p.hand = (p.hand || []).filter(c =>
+                    c.type === 'num' && !c.isEvent && !c.isRare &&
+                    Math.abs(parseInt(c.name)) >= 2 && Math.abs(parseInt(c.name)) <= 9
+                );
+            });
+        } else if (effCard.type === 'crazy') {
+            gameState.players.forEach(p => {
+                if (p.name !== myName) {
+                    for (let k = 0; k < 3; k++) {
+                        p.hand.push({ name: '2147483647', type: 'num', isNew: true });
+                    }
+                }
+            });
+        } else if (effCard.type === 'bomb') {
+            const t = gameState.players.find(p => p.name === targetName);
+            if (t) t.hand.push({ name: "💣🧨", type: 'bomb', isNew: true, isEvent: true });
+        } else if (effCard.type === 'blind') {
+            // メカクシ：発動から2巡の間、暗闇状態（重ね掛けでターン加算！）
+            nextBlindTurns += gameState.players.length * 2;
+        } else if (effCard.type === 'treasure') {
+            // オタカラ：15% 0G / 25% 10G / 25% 20G / 25% 30G / 10% 50G
+            const r = Math.random();
+            if (r < 0.15) treasureAmount = 0;
+            else if (r < 0.40) treasureAmount = 10;
+            else if (r < 0.65) treasureAmount = 20;
+            else if (r < 0.90) treasureAmount = 30;
+            else treasureAmount = 50;
+            curP.gold = (curP.gold ?? 20) + treasureAmount;
+        } else if (effCard.type === 'extort') {
+            // カツアゲ：自分以外の全員から所持Gの2割（小数点以下切り捨て）を強制徴収
+            let totalStolen = 0;
+            gameState.players.forEach(p => {
+                if (p.name !== myName) {
+                    const pGold = p.gold ?? 20;
+                    const steal = Math.floor(pGold * 0.20);
+                    p.gold = pGold - steal;
+                    totalStolen += steal;
+                }
+            });
+            curP.gold = (curP.gold ?? 20) + totalStolen;
+            extortAmount = totalStolen;
+        }
+
+        let step = effCard.type === 'skip' ? 2 : 1;
+        if (effCard.type === 'rev') gameState.direction *= -1;
+        else if (effCard.type === 'draw2') {
+            for (let i = 0; i < 2; i++) curP.hand.push(makeCard(true));
+        }
+
+        if (effCard.type === 'calc' && effCard.name.includes('×')) multiplier = (gameState.nextNumMultiplier || 1) * 2;
+        else multiplier = 1;
+
+        // 自分のターン終了時に自分のショップラインナップを更新！
+        curP.shop = generateShop(4);
+
+        // 手札のNewバッジ更新＆4枚以下なら5枚まで自動補充
+        gameState.players.forEach(p => {
+            if (!p.hand) p.hand = [];
+            p.hand.forEach(c => {
+                if (c.isNew) {
+                    c.age = (c.age || 0) + 1;
+                    if (c.age > 1) delete c.isNew;
+                }
+            });
+            while (p.hand.length < 5) p.hand.push(makeCard(true));
+        });
+
+        nT = Math.max(0, nT);
+
+        // 次の手番プレイヤーの決定（トウミン中＆セトギワ中の数字なしプレイヤーは自動スキップ）
+        let nIdx = (gameState.currentIndex + gameState.direction * step + gameState.players.length * 10) % gameState.players.length;
+        let safetyCounter = 0;
+        while (safetyCounter < gameState.players.length * 3) {
+            safetyCounter++;
+            let skipThis = false;
+            let cp = gameState.players[nIdx];
+            if (cp.hibernation > 0) {
+                cp.hibernation--;
+                if (nextNumOnlyTurns > 0) nextNumOnlyTurns--;
+                if (nextBlindTurns > 0) nextBlindTurns--;
+                skipThis = true;
+            } else if (nextNumOnlyTurns > 0 && cp.hand && !cp.hand.some(c => c.type === 'num')) {
+                nextNumOnlyTurns--;
+                if (nextBlindTurns > 0) nextBlindTurns--;
+                skipThis = true;
+            }
+            if (!skipThis) break;
+            nIdx = (nIdx + gameState.direction + gameState.players.length) % gameState.players.length;
+        }
+
+        const playId = Date.now();
+        const playedRecord = {
+            card: card,
+            effectiveCard: effCard,
+            player: myName,
+            id: playId,
+            target: targetName || null,
+            treasureAmount: treasureAmount,
+            extortAmount: extortAmount,
+            maskedInBlind: wasBlindWhenPlayed && (effCard.type === 'num' || effCard.type === 'calc'),
+            turnCount: gameState.turnCount + 1
+        };
+
+        const history = [...(gameState.cardHistory || []), playedRecord].slice(-20);
+
+        db.ref(roomPath).update({
+            total: nT,
+            currentIndex: nIdx,
+            direction: gameState.direction,
+            players: gameState.players,
+            lastPlayed: playedRecord,
+            cardHistory: history,
+            turnCount: gameState.turnCount + 1,
+            gameOver: nT >= 100,
+            loser: nT >= 100 ? myName : null,
+            numberOnlyTurns: nextNumOnlyTurns,
+            nextNumMultiplier: multiplier,
+            blindTurns: nextBlindTurns
+        });
     }
 </script>
 </body>
